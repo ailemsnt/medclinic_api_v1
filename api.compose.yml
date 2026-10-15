@@ -1,12 +1,14 @@
 name: medclinic-api-v1
 services:
   api:
-    image: medclinic-api-v1:dev
+    image: ghcr.io/ailemsnt/medclinic_api_v1:latest
     container_name: ${CONTAINER_NAME_API}
     env_file:
       - .env
-    ports:
-      - '3000:7000' # nosso:container
+    environment:
+      DB_HOST: host.docker.internal  
+    # ports:
+    #   - '3000:7000' # nosso:container
     # No linux é necessário adicionar o host.internal
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+    # extra_hosts:
+    #   - 'host.docker.internal:host-gateway'

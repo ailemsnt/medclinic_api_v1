@@ -1,7 +1,7 @@
 name: Build
 on:
   push:
-    branches: [develop]
+    branches: [main, develop]
 
 permissions:
   contents: read # Read access to the repository contents
