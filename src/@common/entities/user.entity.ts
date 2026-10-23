@@ -1,10 +1,11 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   UpdateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { Roles } from './enums/roles.enum';
 
@@ -13,6 +14,7 @@ export class User {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
   id!: number;
 
+  @Index({ unique: true })
   @Column('varchar', { length: 255 })
   name!: string;
 
@@ -22,7 +24,7 @@ export class User {
   @Column('varchar', { length: 255 })
   passwordHash!: string;
 
-  @Column('enum', { enum: Roles, default: Roles.ATTENDANT })
+  @Column('enum', { enum: Roles, default: Roles.SECRETARY })
   role!: Roles;
 
   @CreateDateColumn()

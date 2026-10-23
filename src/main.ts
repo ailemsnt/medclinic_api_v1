@@ -2,7 +2,7 @@ import { env } from './@common/config/env.config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { initDatabase } from './@common/database/typeorm/typeorm';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { BadRequestExceptionFilter } from './@common/filters/bad-request-exception.filter';
 
 async function bootstrap() {
@@ -20,6 +20,13 @@ async function bootstrap() {
       transform: true,      
     }),
   );
-  await app.listen(env.PORT ?? 3000);
+
+  app.setGlobalPrefix('api/v1');
+
+  await app.listen(env.PORT);
 }
-bootstrap().catch(console.error);
+
+bootstrap().catch((err: unknown) => {
+  console.error(err)
+  process.exit(-1)
+})
