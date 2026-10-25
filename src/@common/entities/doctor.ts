@@ -26,11 +26,11 @@ export class Doctor {
   @JoinColumn({ name: 'user_id' })
   user!: User
 
-  @CreateDateColumn({ type: 'timestamptz'})
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
 
-  @UpdateDateColumn({ type: 'timestamptz'})
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date
 
   @OneToOne(() => WorkSchedule, (workSchedule) => workSchedule.doctor)
   workSchedule!: WorkSchedule

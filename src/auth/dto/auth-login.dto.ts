@@ -1,5 +1,5 @@
-import { Transform } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
+import { Transform } from 'class-transformer'
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator'
 
 export class AuthLoginDto {
   @IsNotEmpty({ message: 'E-mail não informado.' })
@@ -8,9 +8,9 @@ export class AuthLoginDto {
     typeof value === 'string' ? value.trim().toLocaleLowerCase() : value,
   )
   @Length(1, 150, { message: 'Tamanho inválido para o e-mail.' })
-  email!: string;
+  email!: string
 
   @IsString()
   @IsNotEmpty({ message: 'Senha não informada.' })
-  password!: string;
+  password!: string
 }

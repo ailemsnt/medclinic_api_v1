@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { User } from '../@common/entities/user.entity';
-import { UserCreateDto } from './dto/user-create.dto';
-import { UserRepository } from './user.repository';
-import { UserResponseDto } from './dto/user-response.dto';
+import { Inject, Injectable } from '@nestjs/common'
+import { Repository } from 'typeorm'
+import { User } from '../@common/entities/user.entity'
+import { UserCreateDto } from './dto/user-create.dto'
+import { UserRepository } from './user.repository'
+import { UserResponseDto } from './dto/user-response.dto'
 
-export const TYPEORM_USER_REPOSITORY = 'TYPEORM_USER_REPOSITORY' as const;
+export const TYPEORM_USER_REPOSITORY = 'TYPEORM_USER_REPOSITORY' as const
 
 @Injectable()
 export class UserTypeOrmRepository implements UserRepository {
@@ -28,14 +28,14 @@ export class UserTypeOrmRepository implements UserRepository {
       where: {
         email,
       },
-      relations : {
+      relations: {
         roles: true,
-      }
-    });
+      },
+    })
   }
 
   async get(id: number): Promise<User | null> {
-    return this.repository.findOneBy({ id });
+    return this.repository.findOneBy({ id })
   }
 
   async register(user: UserCreateDto): Promise<UserResponseDto> {
@@ -43,12 +43,13 @@ export class UserTypeOrmRepository implements UserRepository {
       name: user.name,
       email: user.email,
       passwordHash: user.password,
-    });
-    const savedUser = await this.repository.save(userEntity);
+    })
+    const savedUser = await this.repository.save(userEntity)
 
-    return {//TODO: verificar se o roles está correto, pois o retorno do banco é um array de objetos e não um array de strings
+    return {
+      //TODO: verificar se o roles está correto, pois o retorno do banco é um array de objetos e não um array de strings
       ...savedUser,
       roles: savedUser.roles as unknown as UserResponseDto['roles'],
-    };
+    }
   }
 }

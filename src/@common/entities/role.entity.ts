@@ -22,21 +22,21 @@ export type RoleName = (typeof RoleName)[keyof typeof RoleName]
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
-  id!: number;
+  id!: number
 
   @Index({ unique: true })
   @Column('varchar', { length: 255 })
-  name!: string;
+  name!: string
 
   @ManyToMany(() => User, (user: User) => user.roles)
-  users!: User[];
+  users!: User[]
 
-  @CreateDateColumn({ type: 'timestamptz'})
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
 
-  @UpdateDateColumn({ type: 'timestamptz'})
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date
 
-  @DeleteDateColumn({ type: 'timestamptz'})
-  deletedAt!: Date;
+  @DeleteDateColumn({ type: 'timestamptz' })
+  deletedAt!: Date
 }

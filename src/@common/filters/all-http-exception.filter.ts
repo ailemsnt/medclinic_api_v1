@@ -27,7 +27,6 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
     }
 
     if (exception instanceof BadRequestException) {
-      
       super.catch(
         new HttpException(
           {
@@ -43,7 +42,6 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
     }
 
     if (exception instanceof UnauthorizedException) {
-      
       super.catch(
         new HttpException(
           {
@@ -59,7 +57,6 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
     }
 
     if (exception instanceof ForbiddenException) {
-      
       super.catch(
         new HttpException(
           {

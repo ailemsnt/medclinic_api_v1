@@ -10,20 +10,20 @@ import {
 @Entity()
 export class Patient {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
-  id!: number;
+  id!: number
 
   @Column('varchar', { length: 255 })
-  name!: string;
+  name!: string
 
   @Column('char', { length: 11 })
-  cpf!: string;
+  cpf!: string
 
-  @CreateDateColumn({ type: 'timestamptz'})
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
 
-  @UpdateDateColumn({ type: 'timestamptz'})
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date
 
-  @DeleteDateColumn({ type: 'timestamptz'})
-  deletedAt!: Date;
+  @DeleteDateColumn({ type: 'timestamptz' })
+  deletedAt!: Date
 }

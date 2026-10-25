@@ -1,18 +1,18 @@
-import { Doctor } from "../../@common/entities/doctor";
+import { Doctor } from '../../@common/entities/doctor'
 
 export class DoctorUserResponseDto {
-  id!: number;
-  name!: string;
-  email!: string;
-  roles!: string[];
+  id!: number
+  name!: string
+  email!: string
+  roles!: string[]
 }
 
 export class DoctorResponseDto {
-  id!: number;
-  crm!: string;
-  user!: DoctorUserResponseDto;
+  id!: number
+  crm!: string
+  user!: DoctorUserResponseDto
 
-  static resultEntity(doctor: Doctor) : DoctorResponseDto {
+  static resultEntity(doctor: Doctor): DoctorResponseDto {
     return {
       id: doctor.id,
       crm: doctor.crm,
@@ -21,8 +21,7 @@ export class DoctorResponseDto {
         name: doctor.user.name,
         email: doctor.user.email,
         roles: doctor.user.roles.map((role) => role.name),
-      }
+      },
     }
-
   }
 }

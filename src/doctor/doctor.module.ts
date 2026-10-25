@@ -6,8 +6,10 @@ import { WorkScheduleRepository } from './work-schedule.repository'
 import { Doctor } from '../@common/entities/doctor'
 import { WorkSchedule } from '../@common/entities/work-schedule'
 import { typeOrmRepositoryFactory } from '../@common/database/typeorm'
+import { UserModule } from '../user/user.module'
 
 @Module({
+  imports: [UserModule],
   controllers: [DoctorController],
   providers: [
     DoctorService,

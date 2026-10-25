@@ -1,14 +1,14 @@
-import { Transform } from "class-transformer";
-import { IsEmail, IsNotEmpty, IsString, Length, Matches } from "class-validator";
+import { Transform } from 'class-transformer'
+import { IsEmail, IsNotEmpty, IsString, Length, Matches } from 'class-validator'
 
 export class DoctorCreateDto {
-  @IsString({ message: 'Formato inválido para o nome.'})
+  @IsString({ message: 'Formato inválido para o nome.' })
   @IsNotEmpty({ message: 'Nome não informado.' })
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   @Length(6, 100, { message: 'Tamanho inválido para o nome.' })
-  name!: string;
+  name!: string
 
   @IsNotEmpty({ message: 'E-mail não informado.' })
   @IsEmail({}, { message: 'Formato de e-mail inválido.' })
@@ -16,7 +16,7 @@ export class DoctorCreateDto {
     typeof value === 'string' ? value.trim().toLocaleLowerCase() : value,
   )
   @Length(1, 150, { message: 'Tamanho inválido para o e-mail.' })
-  email!: string;
+  email!: string
 
   @IsString({ message: 'Formato do senha informado inválido' })
   @IsNotEmpty({ message: 'Senha não informada.' })
@@ -25,13 +25,13 @@ export class DoctorCreateDto {
     message:
       'A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.',
   })
-  password!: string;
+  password!: string
 
-  @IsString({ message: 'Formato inválido para o CRM.'})
+  @IsString({ message: 'Formato inválido para o CRM.' })
   @IsNotEmpty({ message: 'CRM não informado.' })
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   @Length(4, 20, { message: 'Tamanho inválido para o CRM.' })
-  crm!: string;
+  crm!: string
 }

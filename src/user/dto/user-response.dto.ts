@@ -1,24 +1,24 @@
-import { Exclude, Expose } from 'class-transformer';
-import { Role } from '../../@common/entities/role.entity';
+import { Exclude, Expose } from 'class-transformer'
+import { Role } from '../../@common/entities/role.entity'
 
 @Exclude()
 export class UserResponseDto {
   @Expose()
-  id!: number;
+  id!: number
 
   @Expose()
-  name!: string;
+  name!: string
 
   @Expose()
-  email!: string;
+  email!: string
 
   @Expose()
-  roles!: Role;
+  roles!: Role
 
   @Expose()
-  createdAt!: Date;
+  createdAt!: Date
 
   constructor(partial: Partial<UserResponseDto>) {
-    Object.assign(this, partial);
+    Object.assign(this, partial)
   }
 }

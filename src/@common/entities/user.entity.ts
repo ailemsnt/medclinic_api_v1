@@ -7,33 +7,33 @@ import {
   PrimaryGeneratedColumn,
   JoinTable,
   ManyToMany,
-} from 'typeorm';
-import { Role } from './role.entity';
+} from 'typeorm'
+import { Role } from './role.entity'
 
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
-  id!: number;
+  id!: number
 
   @Column('varchar', { length: 255 })
-  name!: string;
+  name!: string
 
   @Column('varchar', { length: 255, unique: true })
-  email!: string;
+  email!: string
 
   @Column('varchar', { length: 255 })
-  passwordHash!: string;
+  passwordHash!: string
 
   @JoinTable()
   @ManyToMany(() => Role, (role: Role) => role.users)
-  roles!: Role[];
+  roles!: Role[]
 
-  @CreateDateColumn({ type: 'timestamptz'})
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
 
-  @UpdateDateColumn({ type: 'timestamptz'})
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date
 
-  @DeleteDateColumn({ type: 'timestamptz'})
-  deletedAt!: Date;
+  @DeleteDateColumn({ type: 'timestamptz' })
+  deletedAt!: Date
 }

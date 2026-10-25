@@ -21,4 +21,4 @@ export const RequireRole = (
   SetMetadata(ROLES_METADATA_KEY, {
     requiredRoles: roles,
     mode: options.mode,
-  });
+  })

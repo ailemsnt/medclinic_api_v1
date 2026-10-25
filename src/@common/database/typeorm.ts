@@ -1,23 +1,24 @@
-import { env } from '../config/env.config';
-import { DataSource, LoggerOptions } from 'typeorm';
+import { env } from '../config/env.config'
+import { DataSource, LoggerOptions } from 'typeorm'
 
-import { SnakeCaseNamingStrategy } from './snake-case-naming-pattern';
-import { User } from '../entities/user.entity';
-import { Doctor } from '../entities/doctor';
-import { FactoryProvider, Type } from '@nestjs/common';
-import { Role } from '../entities/role.entity';
+import { SnakeCaseNamingStrategy } from './snake-case-naming-pattern'
+import { User } from '../entities/user.entity'
+import { Doctor } from '../entities/doctor'
+import { FactoryProvider, Type } from '@nestjs/common'
+import { Role } from '../entities/role.entity'
+import { Appointment } from '../entities/appointment'
+import { MedicalRecord } from '../entities/medical-record'
+import { Patient } from '../entities/patient'
+import { WorkSchedule } from '../entities/work-schedule'
 
 export const ENTITIES = [
   Role,
   User,
   Doctor,
-  // Role,
-  // User,
-  // Appointment,
-  // Doctor,
-  // MedicalRecord,
-  // Patient,
-  // WorkSchedule,
+  Appointment,
+  MedicalRecord,
+  Patient,
+  WorkSchedule,
 ]
 
 export const appDataSource = new DataSource({
@@ -36,11 +37,11 @@ export const appDataSource = new DataSource({
    * export type LogLevel = "query" | "schema" | "error" | "warn" | "info" | "log" | "migration";
    */
   logging: (env.DB_LOG_LEVEL ?? 'error') as LoggerOptions,
-  entities: [User, Doctor],
+  entities: ENTITIES,
   namingStrategy: new SnakeCaseNamingStrategy(),
   migrations: [__dirname + '/migrations/**/*{.js,.ts}'],
   invalidWhereValuesBehavior: { undefined: 'ignore', null: 'sql-null' },
-});
+})
 
 // export async function initDatabase() {
 //   await AppDataSource.initialize();
@@ -53,17 +54,17 @@ export const appDataSource = new DataSource({
 export const databaseProvider: FactoryProvider<DataSource> = {
   provide: DataSource,
   async useFactory() {
-    const AppDataSource = appDataSource;
+    const AppDataSource = appDataSource
 
-    await AppDataSource.initialize();
+    await AppDataSource.initialize()
 
     await AppDataSource.runMigrations({
       transaction: 'each',
-    });
+    })
 
-    return AppDataSource;
+    return AppDataSource
   },
-};
+}
 
 export function typeOrmRepositoryFactory<T, U>(
   repositoryCls: Type<T>,

@@ -1,37 +1,47 @@
-import { Body, Controller, Get, Param, ParseArrayPipe, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseArrayPipe,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
 
 import { DoctorService } from './doctor.service'
 import { CreateWorkScheduleDto } from './dto/work-schedule-create.dto'
 import { RequireRole } from '../@common/decorators/roles.decorator'
-import { JwtGuard } from '../@common/guards/jwt.guard'
 import { RoleName } from '../@common/entities/role.entity'
 import { DoctorCreateDto } from './dto/doctor-create.dto'
 import { DoctorResponseDto } from './dto/doctor-response'
 import { PaginatedResponseDto } from '../@common/dto/paginated-response.dto'
 import { DoctorListDto } from './dto/doctor-list.dto'
 
-@UseGuards(JwtGuard)
 @Controller('doctors')
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 
   @Post()
-  @RequireRole([ RoleName.ADMIN])
+  @RequireRole([RoleName.ADMIN])
   async createDoctor(@Body() dto: DoctorCreateDto): Promise<DoctorResponseDto> {
     return this.doctorService.create(dto)
   }
 
   @Get()
   async findAll(
-    @Query() query:DoctorListDto
+    @Query() query: DoctorListDto,
   ): Promise<PaginatedResponseDto<DoctorResponseDto>> {
-    return this.doctorService.findAll(query);
+    return this.doctorService.findAll(query)
   }
 
   @Get(':id')
   async findById(
-    @Param('id', ParseIntPipe) id: number): Promise<DoctorResponseDto> {
-    return this.doctorService.findById(id);
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<DoctorResponseDto> {
+    return this.doctorService.findById(id)
   }
 
   @RequireRole([RoleName.DOCTOR, RoleName.ADMIN])
