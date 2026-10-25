@@ -33,7 +33,7 @@ export class DoctorService {
       throw new DomainError('CRM já cadastrado', ERROR_CODE.CRM_JA_CADASTRADO)
     }
 
-    const doctor = await this.doctorRepository.createWithUser({
+    const doctor = await this.doctorRepository.createDoctorWithUser({
       name: dto.name,
       email: dto.email,
       passwordHash: await hashPassword(dto.password),

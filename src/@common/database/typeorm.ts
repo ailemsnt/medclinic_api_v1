@@ -15,9 +15,9 @@ export const ENTITIES = [
   Role,
   User,
   Doctor,
+  Patient,
   Appointment,
   MedicalRecord,
-  Patient,
   WorkSchedule,
 ]
 

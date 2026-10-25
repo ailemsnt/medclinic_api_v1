@@ -8,7 +8,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common'
 
 import { DoctorService } from './doctor.service'
