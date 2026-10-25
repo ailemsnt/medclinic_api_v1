@@ -1,14 +1,14 @@
-import { Module } from '@nestjs/common';
-import { JwtModule } from '../auth/jwt/jwt.module';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
-import { UserRepository } from './user.repository';
+import { Module } from '@nestjs/common'
+import { JwtModule } from '../auth/jwt/jwt.module'
+import { UserController } from './user.controller'
+import { UserService } from './user.service'
+import { UserRepository } from './user.repository'
 import {
   TYPEORM_USER_REPOSITORY,
   UserTypeOrmRepository,
-} from './user-typeorm.repository';
-import { AppDataSource } from '../@common/database/typeorm/typeorm';
-import { User } from '../@common/entities/user.entity';
+} from './user-typeorm.repository'
+import { User } from '../@common/entities/user.entity'
+import { appDataSource } from '../@common/database/typeorm'
 
 @Module({
   imports: [JwtModule],
@@ -22,7 +22,7 @@ import { User } from '../@common/entities/user.entity';
     {
       provide: TYPEORM_USER_REPOSITORY,
       useFactory() {
-        return AppDataSource.getRepository(User);
+        return appDataSource.getRepository(User)
       },
     },
   ],

@@ -1,11 +1,5 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  Length,
-  Matches,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsEmail, IsNotEmpty, IsString, Length, Matches } from 'class-validator'
+import { Transform } from 'class-transformer'
 
 export class AuthRegisterDto {
   @IsString()
@@ -17,7 +11,7 @@ export class AuthRegisterDto {
   @Matches(/^[^\d\s\p{P}\p{S}'-]+(?: [^\d\s\p{P}\p{S}'-]+)*$/u, {
     message: 'O nome contém caracteres inválidos.',
   }) //essa regex permite nomes escritos em outros idiomas
-  name!: string;
+  name!: string
 
   @IsNotEmpty({ message: 'E-mail não informado.' })
   @IsEmail({}, { message: 'Formato de e-mail inválido.' })
@@ -25,7 +19,7 @@ export class AuthRegisterDto {
     typeof value === 'string' ? value.trim().toLocaleLowerCase() : value,
   )
   @Length(7, 150, { message: 'Tamanho inválido para o e-mail.' })
-  email!: string;
+  email!: string
 
   @IsString({ message: 'Formato do senha informado inválido' })
   @IsNotEmpty({ message: 'Senha não informada.' })
@@ -34,5 +28,5 @@ export class AuthRegisterDto {
     message:
       'A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.',
   })
-  password!: string;
+  password!: string
 }

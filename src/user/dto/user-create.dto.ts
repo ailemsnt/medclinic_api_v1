@@ -1,11 +1,5 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  Length,
-  Matches,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsEmail, IsNotEmpty, IsString, Length, Matches } from 'class-validator'
+import { Transform } from 'class-transformer'
 
 export class UserCreateDto {
   @IsString()
@@ -14,7 +8,7 @@ export class UserCreateDto {
     typeof value === 'string' ? value.trim() : value,
   )
   @Length(6, 100, { message: 'Tamanho mínimo inválido para o nome.' })
-  name!: string;
+  name!: string
 
   @IsNotEmpty({ message: 'E-mail não informado.' })
   @IsEmail({}, { message: 'Formato de e-mail inválido.' })
@@ -22,7 +16,7 @@ export class UserCreateDto {
     typeof value === 'string' ? value.trim().toLocaleLowerCase() : value,
   )
   @Length(1, 150, { message: 'Tamanho inválido para o e-mail.' })
-  email!: string;
+  email!: string
 
   @IsString({ message: 'Formato do senha informado inválido' })
   @IsNotEmpty({ message: 'Senha não informada.' })
@@ -31,5 +25,5 @@ export class UserCreateDto {
     message:
       'A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.',
   })
-  password!: string;
+  password!: string
 }

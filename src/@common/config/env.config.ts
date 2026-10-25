@@ -1,30 +1,30 @@
-import 'dotenv/config';
-import { z } from 'zod';
+import 'dotenv/config'
+import { z } from 'zod'
 
 const validateJwtExpiration = (value: string): boolean => {
-  const match = value.match(/^(\d+)([mhd])$/);
+  const match = value.match(/^(\d+)([mhd])$/)
 
   if (!match) {
-    return false;
+    return false
   }
 
-  const amount = Number(match[1]);
-  const unit = match[2];
+  const amount = Number(match[1])
+  const unit = match[2]
 
   switch (unit) {
     case 'm':
-      return amount <= 24 * 60;
+      return amount <= 24 * 60
 
     case 'h':
-      return amount <= 24;
+      return amount <= 24
 
     case 'd':
-      return amount <= 1;
+      return amount <= 1
 
     default:
-      return false;
+      return false
   }
-};
+}
 
 const envSchema = z.object({
   //Conf ambiente de desenvolvimento
@@ -61,12 +61,12 @@ const envSchema = z.object({
 
   DB_SYNCHRONIZE: z.preprocess((val) => {
     if (typeof val === 'string') {
-      return val.toLowerCase() === 'true';
+      return val.toLowerCase() === 'true'
     }
     if (typeof val === 'boolean') {
-      return val;
+      return val
     }
-    return false;
+    return false
   }, z.boolean().default(false)),
   DB_LOG_LEVEL: z.enum(['query', 'error', 'info', 'warn']).default('error'),
 
@@ -86,19 +86,24 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('1h').refine(validateJwtExpiration, {
     message: 'JWT_EXPIRES_IN deve ser um período válido de no máximo 24 horas',
   }),
-});
 
-const _env = envSchema.safeParse(process.env);
+  //Admin inicial
+  ADMIN_NAME: z.string().default('Administrador'),
+  ADMIN_EMAIL: z.email('E-mail dever ser válido'),
+  ADMIN_PASSWORD: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
+})
+
+const _env = envSchema.safeParse(process.env)
 if (_env.success === false) {
   console.error(
     'Não será possível inicializar a API - Variáveis de ambiente inválidas:',
-  );
-  const errors = _env.error.flatten().fieldErrors;
+  )
+  const errors = _env.error.flatten().fieldErrors
   Object.entries(errors).forEach(([field, messages]) => {
-    console.error(`  - [${field}]: ${messages?.join(', ')}`);
-  });
+    console.error(`  - [${field}]: ${messages?.join(', ')}`)
+  })
 
-  process.exit(1);
+  process.exit(1)
 }
 
-export const env = _env.data;
+export const env = _env.data

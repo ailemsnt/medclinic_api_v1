@@ -1,24 +1,23 @@
-import { Exclude, Expose } from 'class-transformer';
-import { Roles } from '../../@common/entities/enums/roles.enum';
+import { Exclude, Expose } from 'class-transformer'
 
 @Exclude()
 export class AuthResponseDto {
   @Expose()
-  id!: number;
+  id!: number
 
   @Expose()
-  name!: string;
+  name!: string
 
   @Expose()
-  email!: string;
+  email!: string
 
   @Expose()
-  role!: Roles;
+  roles!: string[]
 
   @Expose()
-  createdAt!: Date;
+  createdAt!: Date
 
   constructor(partial: Partial<AuthResponseDto>) {
-    Object.assign(this, partial);
+    Object.assign(this, partial)
   }
 }

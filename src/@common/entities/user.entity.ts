@@ -1,36 +1,39 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Roles } from './enums/roles.enum';
+  Entity,
+  PrimaryGeneratedColumn,
+  JoinTable,
+  ManyToMany,
+} from 'typeorm'
+import { Role } from './role.entity'
 
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
-  id!: number;
+  id!: number
 
   @Column('varchar', { length: 255 })
-  name!: string;
+  name!: string
 
   @Column('varchar', { length: 255, unique: true })
-  email!: string;
+  email!: string
 
   @Column('varchar', { length: 255 })
-  passwordHash!: string;
+  passwordHash!: string
 
-  @Column('enum', { enum: Roles, default: Roles.ATTENDANT })
-  role!: Roles;
+  @JoinTable()
+  @ManyToMany(() => Role, (role: Role) => role.users)
+  roles!: Role[]
 
-  @CreateDateColumn()
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date
 
-  @DeleteDateColumn()
-  deletedAt!: Date;
+  @DeleteDateColumn({ type: 'timestamptz' })
+  deletedAt!: Date
 }

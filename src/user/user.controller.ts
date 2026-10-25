@@ -4,12 +4,12 @@ import {
   Get,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
-import { UserService } from './user.service';
-import { JwtGuard } from '../@common/guards/jwt.guard';
-import { GetUserJwt } from '../@common/decorators/get-user-jwt.decorator';
-import type { AuthUserDto } from '../@common/dto/auth-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
+} from '@nestjs/common'
+import { UserService } from './user.service'
+import { JwtGuard } from '../@common/guards/jwt.guard'
+import { GetUserJwt } from '../@common/decorators/get-user-jwt.decorator'
+import type { AuthUserDto } from '../@common/dto/auth-user.dto'
+import { UserResponseDto } from './dto/user-response.dto'
 
 @UseGuards(JwtGuard)
 @Controller('users')
@@ -19,7 +19,7 @@ export class UserController {
   @Get('me')
   @UseInterceptors(ClassSerializerInterceptor)
   async getMe(@GetUserJwt() user: AuthUserDto): Promise<UserResponseDto> {
-    const userMe = await this.userService.get(Number(user.sub));
-    return new UserResponseDto(userMe);
+    const userMe = await this.userService.get(Number(user.sub)) //TODO: ver user id do me
+    return new UserResponseDto(userMe as unknown as Partial<UserResponseDto>)
   }
 }
