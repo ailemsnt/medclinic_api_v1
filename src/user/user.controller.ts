@@ -19,7 +19,7 @@ export class UserController {
   @Get('me')
   @UseInterceptors(ClassSerializerInterceptor)
   async getMe(@GetUserJwt() user: AuthUserDto): Promise<UserResponseDto> {
-    const userMe = await this.userService.get(Number(user.sub));
-    return new UserResponseDto(userMe);
+    const userMe = await this.userService.get(Number(user.sub));//TODO: ver user id do me
+    return new UserResponseDto(userMe as unknown as Partial<UserResponseDto>);
   }
 }

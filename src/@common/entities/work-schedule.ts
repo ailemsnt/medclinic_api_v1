@@ -21,15 +21,15 @@ export class WorkScheduleConfiguration {
 @Entity()
 export class WorkSchedule {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
-  id!: number
+  id!: number;
 
   @Column('number')
-  doctorId!: number
+  doctorId!: number;
 
   @Column('jsonb')
-  configuration!: WorkScheduleConfiguration[]
+  configuration!: WorkScheduleConfiguration[];
 
   @JoinColumn({ name: 'doctor_id' })
   @OneToOne(() => Doctor)
-  doctor!: Doctor
+  doctor!: Doctor;
 }

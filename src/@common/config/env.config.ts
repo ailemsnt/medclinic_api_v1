@@ -86,6 +86,11 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('1h').refine(validateJwtExpiration, {
     message: 'JWT_EXPIRES_IN deve ser um período válido de no máximo 24 horas',
   }),
+
+  //Admin inicial
+  ADMIN_NAME: z.string().default('Administrador'),
+  ADMIN_EMAIL: z.email('E-mail dever ser válido'),
+  ADMIN_PASSWORD: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
 });
 
 const _env = envSchema.safeParse(process.env);

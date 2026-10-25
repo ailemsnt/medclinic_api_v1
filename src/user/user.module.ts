@@ -7,8 +7,8 @@ import {
   TYPEORM_USER_REPOSITORY,
   UserTypeOrmRepository,
 } from './user-typeorm.repository';
-import { AppDataSource } from '../@common/database/typeorm/typeorm';
 import { User } from '../@common/entities/user.entity';
+import { appDataSource } from '../@common/database/typeorm';
 
 @Module({
   imports: [JwtModule],
@@ -22,7 +22,7 @@ import { User } from '../@common/entities/user.entity';
     {
       provide: TYPEORM_USER_REPOSITORY,
       useFactory() {
-        return AppDataSource.getRepository(User);
+        return appDataSource.getRepository(User);
       },
     },
   ],

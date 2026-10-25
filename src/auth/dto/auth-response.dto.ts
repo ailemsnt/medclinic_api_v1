@@ -1,5 +1,4 @@
 import { Exclude, Expose } from 'class-transformer';
-import { Roles } from '../../@common/entities/enums/roles.enum';
 
 @Exclude()
 export class AuthResponseDto {
@@ -13,7 +12,7 @@ export class AuthResponseDto {
   email!: string;
 
   @Expose()
-  role!: Roles;
+  roles!: string[];
 
   @Expose()
   createdAt!: Date;

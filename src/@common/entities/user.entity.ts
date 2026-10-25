@@ -5,16 +5,16 @@ import {
   UpdateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  Index,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
-import { Roles } from './enums/roles.enum';
+import { Role } from './role.entity';
 
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
   id!: number;
 
-  @Index({ unique: true })
   @Column('varchar', { length: 255 })
   name!: string;
 
@@ -24,15 +24,16 @@ export class User {
   @Column('varchar', { length: 255 })
   passwordHash!: string;
 
-  @Column('enum', { enum: Roles, default: Roles.SECRETARY })
-  role!: Roles;
+  @JoinTable()
+  @ManyToMany(() => Role, (role: Role) => role.users)
+  roles!: Role[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz'})
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz'})
   updatedAt!: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ type: 'timestamptz'})
   deletedAt!: Date;
 }

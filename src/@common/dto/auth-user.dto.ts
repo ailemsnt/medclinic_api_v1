@@ -1,8 +1,8 @@
 import { JwtPayload } from 'jsonwebtoken';
-import { Roles } from '../entities/enums/roles.enum';
+import { RoleName } from '../entities/role.entity';
 
 export interface AuthUserDto extends JwtPayload {
   data: {
-    role: Roles;
+    roles: RoleName[];
   };
 }

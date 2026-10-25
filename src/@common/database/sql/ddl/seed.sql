@@ -1,0 +1,5 @@
+-- ==================================================
+-- SEED DATA TABLES
+-- Dados iniciais para as tabelas do banco de dados
+-- ⚠️ Apenas para desenvolvimento/teste
+-- ==================================================

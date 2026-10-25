@@ -5,7 +5,6 @@ import {
   beforeAll,
   jest,
 } from '@jest/globals';
-import { Roles } from './../../@common/entities/enums/roles.enum';
 import { UserService } from "../../user/user.service";
 import { AuthRegisterDto } from "../dto/auth-register.dto";
 import { AuthResponseDto } from '../dto/auth-response.dto';
@@ -14,19 +13,22 @@ import { AuthService } from '../auth.service';
 import { JwtService } from '../jwt/jwt.service';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthLoginDto } from '../dto/auth-login.dto';
+import { RoleName } from '../../@common/entities/role.entity';
 
 class UserServiceMock implements Partial<UserService>{
   private memoryDb = new Map<number, User>();
 
   private idSequence = 0;
 
-  async register(user: AuthRegisterDto): Promise<AuthResponseDto>{
+  async register(
+    user: Parameters<UserService['register']>[0],
+  ): Promise<Awaited<ReturnType<UserService['register']>>>{//TODO: ver register
     const userEntity = new User();
     userEntity.id = ++this.idSequence;
     userEntity.name = user.name;
     userEntity.email = user.email;
     userEntity.passwordHash = user.password;
-    userEntity.role = Roles.ATTENDANT;
+    userEntity.roles = [{ name: RoleName.SECRETARY } as User['roles'][number]];//TODO: ver role
     userEntity.createdAt = new Date();
 
     this.memoryDb.set(userEntity.id, userEntity);
@@ -35,7 +37,7 @@ class UserServiceMock implements Partial<UserService>{
       id: userEntity.id,
       name: userEntity.name,
       email: userEntity.email,
-      role: userEntity.role,
+      roles: userEntity.roles[0],//TODO: ver entity
       createdAt: userEntity.createdAt
     };
   }
@@ -137,7 +139,7 @@ describe(AuthService.name, () => {
       expect(result).toEqual({
         token: 'meutoken',
         user: 2,
-        role: Roles.ATTENDANT,
+        roles: [RoleName.SECRETARY],
         expiresIn: expect.anything(),
       });
     });

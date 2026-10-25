@@ -22,12 +22,15 @@ export class UserTypeOrmRepository implements UserRepository {
         passwordHash: true,
         name: true,
         email: true,
-        role: true,
+        roles: true,
         id: true,
       },
       where: {
         email,
       },
+      relations : {
+        roles: true,
+      }
     });
   }
 
@@ -43,6 +46,9 @@ export class UserTypeOrmRepository implements UserRepository {
     });
     const savedUser = await this.repository.save(userEntity);
 
-    return savedUser;
+    return {//TODO: verificar se o roles está correto, pois o retorno do banco é um array de objetos e não um array de strings
+      ...savedUser,
+      roles: savedUser.roles as unknown as UserResponseDto['roles'],
+    };
   }
 }

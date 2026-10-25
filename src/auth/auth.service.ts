@@ -10,6 +10,7 @@ import { JWT_EXPIRES_IN } from '../@common/config/jwt.config';
 import { UserService } from '../user/user.service';
 import { AuthRegisterDto } from './dto/auth-register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { hashPassword } from '../@common/utils/hash-password';
 
 @Injectable()
 export class AuthService {
@@ -25,13 +26,17 @@ export class AuthService {
       throw new ConflictException('Usuário já cadastrado');
     }
 
-    const salt = await genSalt(10);
-    const hashPassword = await hash(user.password, salt);
+    const hashedPassword = await hashPassword(user.password);
 
-    return this.userService.register({
+    const registeredUser = await this.userService.register({
       ...user,
-      password: hashPassword,
+      password: hashedPassword,
     });
+
+    return {
+      ...registeredUser,
+      roles: [registeredUser.roles.name],//TODO: ver user
+    };
   }
 
   async login(loginDto: AuthLoginDto) {
@@ -47,7 +52,7 @@ export class AuthService {
 
     const token = this.jwtService.sign(
       {
-        role: user.role,
+        role: user.roles.map((role) => role.name),//TODO: ver assinatura
       },
       user.id,
     );
@@ -55,7 +60,7 @@ export class AuthService {
     return {
       token,
       user: user.id,
-      role: user.role,
+      role: user.roles,//TODO: ver role
       expiresIn: JWT_EXPIRES_IN,
     };
   }

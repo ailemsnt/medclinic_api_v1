@@ -2,7 +2,9 @@ import {
   ArgumentsHost,
   BadRequestException,
   Catch,
+  ForbiddenException,
   HttpException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { BaseExceptionFilter } from '@nestjs/core'
 
@@ -25,6 +27,7 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
     }
 
     if (exception instanceof BadRequestException) {
+      
       super.catch(
         new HttpException(
           {
@@ -33,6 +36,38 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
             message: exception.message,
           },
           400,
+        ),
+        host,
+      )
+      return
+    }
+
+    if (exception instanceof UnauthorizedException) {
+      
+      super.catch(
+        new HttpException(
+          {
+            statusCode: 401,
+            error: ERROR_CODE.NAO_AUTENTICADO,
+            message: exception.message,
+          },
+          401,
+        ),
+        host,
+      )
+      return
+    }
+
+    if (exception instanceof ForbiddenException) {
+      
+      super.catch(
+        new HttpException(
+          {
+            statusCode: 403,
+            error: ERROR_CODE.ACESSO_NEGADO,
+            message: exception.message,
+          },
+          403,
         ),
         host,
       )

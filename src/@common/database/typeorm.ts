@@ -1,15 +1,29 @@
-import { env } from '../../config/env.config';
+import { env } from '../config/env.config';
 import { DataSource, LoggerOptions } from 'typeorm';
 
 import { SnakeCaseNamingStrategy } from './snake-case-naming-pattern';
-import { User } from '../../entities/user.entity';
-import { Doctor } from '../../entities/doctor';
+import { User } from '../entities/user.entity';
+import { Doctor } from '../entities/doctor';
 import { FactoryProvider, Type } from '@nestjs/common';
+import { Role } from '../entities/role.entity';
 
-export const AppDataSource = new DataSource({
+export const ENTITIES = [
+  Role,
+  User,
+  Doctor,
+  // Role,
+  // User,
+  // Appointment,
+  // Doctor,
+  // MedicalRecord,
+  // Patient,
+  // WorkSchedule,
+]
+
+export const appDataSource = new DataSource({
   type: 'postgres',
   host: env.DB_HOST,
-  port: Number(env.DB_PORT ?? 5432),
+  port: env.DB_PORT,
   username: env.DB_USER,
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
@@ -28,13 +42,28 @@ export const AppDataSource = new DataSource({
   invalidWhereValuesBehavior: { undefined: 'ignore', null: 'sql-null' },
 });
 
-export async function initDatabase() {
-  await AppDataSource.initialize();
+// export async function initDatabase() {
+//   await AppDataSource.initialize();
 
-  await AppDataSource.runMigrations({
-    transaction: 'each',
-  });
-}
+//   await AppDataSource.runMigrations({
+//     transaction: 'each',
+//   });
+// }
+
+export const databaseProvider: FactoryProvider<DataSource> = {
+  provide: DataSource,
+  async useFactory() {
+    const AppDataSource = appDataSource;
+
+    await AppDataSource.initialize();
+
+    await AppDataSource.runMigrations({
+      transaction: 'each',
+    });
+
+    return AppDataSource;
+  },
+};
 
 export function typeOrmRepositoryFactory<T, U>(
   repositoryCls: Type<T>,
