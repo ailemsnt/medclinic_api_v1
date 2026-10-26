@@ -7,7 +7,7 @@ import {
   TYPEORM_USER_REPOSITORY,
   UserTypeOrmRepository,
 } from './user-typeorm.repository'
-import { User } from '../@common/entities/user.entity'
+import { User } from '../@common/entities/user'
 import { appDataSource } from '../@common/database/typeorm'
 
 @Module({

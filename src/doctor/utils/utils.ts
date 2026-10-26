@@ -7,3 +7,9 @@ export function toAbsoluteDayMinutes(timeString: string): number {
 
   return hour * 60 + minute
 }
+
+/** Converte "HH:MM" em minutos desde 00:00 (ex.: "08:30" -> 510). */
+export function timeToMinutes(time: string): number {
+  const [hour, minute] = time.split(':').map(Number)
+  return hour * 60 + minute
+}

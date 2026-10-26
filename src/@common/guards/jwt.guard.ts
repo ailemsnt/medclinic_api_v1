@@ -6,6 +6,7 @@ import { AuthUserDto } from '../dto/auth-user.dto'
 import { Reflector } from '@nestjs/core'
 import { DomainError, ERROR_CODE } from '../errors/domain.error'
 import { RoleMetadata, ROLES_METADATA_KEY } from '../decorators/roles.decorator'
+import { PUBLIC_ROUTE_METADATA_KEY } from '../decorators/public-route.decorator'
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -61,10 +62,24 @@ export class JwtGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+    const isPublicRoute = this.reflector.getAllAndOverride<boolean | undefined>(
+      PUBLIC_ROUTE_METADATA_KEY,
+      [context.getHandler(), context.getClass()],
+    )
+
+    if (isPublicRoute) {
+      return true
+    }
+
     const payload = this.jwtService.verify(this.extractToken(context))
     if (payload.iss !== 'sctec') {
       throw new DomainError('Token inválido', ERROR_CODE.NAO_AUTENTICADO)
     }
+
+    if (!this.hasRequiredRoles(context, payload)) {
+      throw new DomainError('Token inválido', ERROR_CODE.ACESSO_NEGADO)
+    }
+
     this.setPayload(context, payload)
     return true
   }

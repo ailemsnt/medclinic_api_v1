@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { Repository } from 'typeorm'
 import { Doctor } from '../@common/entities/doctor'
-import { Role, RoleName } from '../@common/entities/role.entity'
-import { User } from '../@common/entities/user.entity'
+import { Role, RoleName } from '../@common/entities/role'
+import { User } from '../@common/entities/user'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
 import { isUniqueViolation } from '../@common/database/unique-violation'
 export interface DoctorCreateInput {
@@ -30,7 +30,7 @@ export class DoctorRepository extends Repository<Doctor> {
           manager.create(User, {
             name: input.name,
             email: input.email,
-            passworHash: input.passwordHash,
+            passwordHash: input.passwordHash,
             roles: [doctorRole],
           }),
         )

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 
-import { Role } from '../@common/entities/role.entity'
+import { Role } from '../@common/entities/role'
 import { RoleRepository } from './role.repository'
 import { RoleService } from './role.service'
 
