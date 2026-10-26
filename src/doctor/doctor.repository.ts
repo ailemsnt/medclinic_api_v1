@@ -59,6 +59,10 @@ export class DoctorRepository extends Repository<Doctor> {
     })
   }
 
+  async findByUserId(userId: number): Promise<Doctor | null> {
+    return this.findOne({ where: { userId } })
+  }
+
   async findByCrm(crm: string): Promise<Doctor | null> {
     return this.findOne({
       where: { crm },

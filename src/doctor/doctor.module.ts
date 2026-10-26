@@ -19,5 +19,6 @@ import { WorkScheduleService } from './work-schedule.service'
     typeOrmRepositoryFactory(DoctorRepository, Doctor),
     typeOrmRepositoryFactory(WorkScheduleRepository, WorkSchedule),
   ],
+  exports: [DoctorRepository, WorkScheduleRepository],
 })
 export class DoctorModule {}

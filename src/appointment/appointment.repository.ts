@@ -1,149 +1,91 @@
 import { Injectable } from '@nestjs/common'
-import { Between, Repository } from 'typeorm'
-
+import { Appointment } from './../@common/entities/appointment'
 import {
-  Appointment,
-  APPOINTMENT_STATUS,
-} from '../@common/entities/appointment'
+  Repository,
+  FindOptionsWhere,
+  Not,
+  LessThan,
+  MoreThan,
+  MoreThanOrEqual,
+  And,
+  In,
+} from 'typeorm'
+
+import { APPOINTMENT_STATUS } from '../@common/entities/appointment'
 import { Doctor } from '../@common/entities/doctor'
 import { Patient } from '../@common/entities/patient'
 import { WorkSchedule } from '../@common/entities/work-schedule'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
-import { toAbsoluteDayMinutes } from '../doctor/utils/utils'
+import { timeToMinutes, toClinicTime } from '../doctor/utils/utils'
 
+export interface AppointmentCreateInput {
+  doctorId: number
+  patientId: number
+  startsAt: Date
+}
+
+export interface AppointmentFindFilter {
+  page: number
+  pageSize: number
+  doctorId?: number
+  patientId?: number
+  status?: APPOINTMENT_STATUS
+  from?: Date
+  to?: Date
+}
 @Injectable()
 export class AppointmentRepository extends Repository<Appointment> {
-  private checkConflict(
-    appointments: Appointment[],
-    newAppointment: {
-      start: Date
-      duration: number
-    },
-  ) {
-    const newStartMs = newAppointment.start.getTime()
-    const newEndMs =
-      newAppointment.start.getTime() + newAppointment.duration * 60 * 1000
-    appointments.forEach((appointment) => {
-      const appointmentStart = appointment.date.getTime()
-      const appointmentEnd =
-        appointment.date.getTime() + appointment.duration * 60 * 1000
-      // diferença do começo da nova consulta com o fim da atual
-      const newStartToEnd = newStartMs - appointmentEnd
-      const newEndToStart = newEndMs - appointmentStart
+  private getSlotDuration(
+    startsAt: Date,
+    workSchedule: WorkSchedule | null,
+  ): number {
+    const { weekDay, minutes } = toClinicTime(startsAt)
+    const isWholeMinute = startsAt.getTime() % 60000 === 0
 
-      if (newStartToEnd + newEndToStart === 0) {
-        throw new DomainError(
-          'Conflito de horário',
-          ERROR_CODE.HORARIO_INDISPONIVEL,
-        )
-      }
+    const configuration = workSchedule?.configuration
+      .filter((config) => config.weekDay === weekDay)
+      .find((config) =>
+        config.time.some((time) => {
+          const startTimeMinutes = timeToMinutes(time.startTime)
+          const endTimeMinutes = timeToMinutes(time.endTime)
 
-      if (
-        // começa antes de terminar
-        newStartToEnd < 0 &&
-        // termina antes de começar
-        newEndToStart > 0
-      ) {
-        throw new DomainError(
-          'Conflito de horário',
-          ERROR_CODE.HORARIO_INDISPONIVEL,
-        )
-      }
-    })
-  }
+          return (
+            minutes >= startTimeMinutes &&
+            (minutes - startTimeMinutes) % config.duration === 0 &&
+            minutes + config.duration <= endTimeMinutes
+          )
+        }),
+      )
 
-  private checkWorkSchedule(
-    appointment: Appointment,
-    workSchedule: WorkSchedule,
-  ) {
-    const currentWeekDay = appointment.date.getDay()
-    const appointmentStartMinutes = toAbsoluteDayMinutes(
-      new Intl.DateTimeFormat('pt-BR', {
-        timeZone: 'UTC',
-        timeStyle: 'short',
-      }).format(appointment.date),
-    )
-    const appointmentEndMinutes = toAbsoluteDayMinutes(
-      new Intl.DateTimeFormat('pt-BR', {
-        timeZone: 'UTC',
-        timeStyle: 'short',
-      }).format(
-        new Date(appointment.date.getTime() + appointment.duration * 60 * 1000),
-      ),
-    )
-
-    if (workSchedule.configuration.length === 0) {
-      throw new DomainError('Fora de escala', ERROR_CODE.HORARIO_FORA_DA_ESCALA)
-    }
-
-    const weekDayConfiguration = workSchedule.configuration.find(
-      (config) => config.weekDay === currentWeekDay,
-    )
-
-    if (!weekDayConfiguration) {
-      throw new DomainError('Fora de escala', ERROR_CODE.HORARIO_FORA_DA_ESCALA)
-    }
-
-    if (appointment.duration !== weekDayConfiguration.duration) {
+    if (!configuration || !isWholeMinute) {
       throw new DomainError(
-        'Duração incompatível com a escala',
+        'Horário fora da escala do médico.',
         ERROR_CODE.HORARIO_FORA_DA_ESCALA,
       )
     }
 
-    const isInShift = weekDayConfiguration.time.some((time) => {
-      const startTimeMinutes = toAbsoluteDayMinutes(time.startTime)
-
-      const endTimeMinutes = toAbsoluteDayMinutes(time.endTime)
-
-      if (
-        appointmentStartMinutes > endTimeMinutes ||
-        appointmentStartMinutes < startTimeMinutes ||
-        appointmentEndMinutes > endTimeMinutes
-      ) {
-        return false
-      }
-
-      return true
-    })
-
-    if (!isInShift) {
-      throw new DomainError(
-        'Horário não permitido',
-        ERROR_CODE.HORARIO_FORA_DA_ESCALA,
-      )
-    }
+    return configuration.duration
   }
 
-  async createAppointment(input: {
-    doctorId: number
-    patientId: number
-    date: Date
-    duration: number
-  }): Promise<Appointment> {
+  async createAppointment(input: AppointmentCreateInput): Promise<Appointment> {
     // TODO: Validar se a data do agendamento não é no passado
-
-    const patient = await this.manager.getRepository(Patient).findOne({
+    const patientExists = await this.manager.getRepository(Patient).findOne({
       where: {
         id: input.patientId,
       },
     })
 
-    if (!patient) {
+    if (!patientExists) {
       throw new DomainError(
         'Paciente não encontrado',
         ERROR_CODE.RECURSO_NAO_ENCONTRADO,
       )
     }
 
-    return await this.manager.transaction(async (tx) => {
-      const doctorRepository = tx.getRepository(Doctor)
-      const appointment = this.create({
-        ...input,
-        status: APPOINTMENT_STATUS.scheduled,
-      })
+    return await this.manager.transaction(async (transcationManager) => {
+      const doctorRepository = transcationManager.getRepository(Doctor)
 
-      const doctor = await doctorRepository.findOne({
+      const doctorExists = await doctorRepository.findOne({
         where: {
           id: input.doctorId,
         },
@@ -152,7 +94,14 @@ export class AppointmentRepository extends Repository<Appointment> {
         },
       })
 
-      const doctorWorkSchedule = await tx
+      if (!doctorExists) {
+        throw new DomainError(
+          'Médico não encontrado',
+          ERROR_CODE.RECURSO_NAO_ENCONTRADO,
+        )
+      }
+
+      const doctorWorkSchedule = await transcationManager
         .getRepository(WorkSchedule)
         .findOneOrFail({
           where: {
@@ -160,32 +109,107 @@ export class AppointmentRepository extends Repository<Appointment> {
           },
         })
 
-      if (!doctor) {
+      const duration = this.getSlotDuration(input.startsAt, doctorWorkSchedule)
+      const endsAt = new Date(input.startsAt.getTime() + duration * 60 * 1000)
+
+      //to check conflicts on schedule
+      const overlapSchedule: FindOptionsWhere<Appointment> = {
+        status: Not(APPOINTMENT_STATUS.CANCELLED),
+        startsAt: LessThan(endsAt),
+        endsAt: MoreThan(input.startsAt),
+      }
+
+      if (
+        await transcationManager.exists(Appointment, {
+          where: { ...overlapSchedule, doctorId: input.doctorId },
+        })
+      ) {
         throw new DomainError(
-          'Médico não encontrado',
-          ERROR_CODE.RECURSO_NAO_ENCONTRADO,
+          'Horário indisponível',
+          ERROR_CODE.HORARIO_INDISPONIVEL,
         )
       }
 
-      this.checkWorkSchedule(appointment, doctorWorkSchedule)
+      if (
+        await transcationManager.exists(Appointment, {
+          where: { ...overlapSchedule, patientId: input.patientId },
+        })
+      ) {
+        throw new DomainError(
+          'O pacinte já possui consulta agendada neste horário',
+          ERROR_CODE.PACIENTE_INDISPONIVEL,
+        )
+      }
 
-      const appointmentEnd = new Date(
-        appointment.date.getTime() + appointment.duration * 60 * 1000,
-      )
-
-      const currentAppointments = await tx.find(Appointment, {
-        where: {
-          doctorId: input.doctorId,
-          date: Between(input.date, appointmentEnd),
-        },
+      const appointment = transcationManager.create(Appointment, {
+        ...input,
+        endsAt,
+        status: APPOINTMENT_STATUS.SCHEDULED,
       })
 
-      this.checkConflict(currentAppointments, {
-        start: input.date,
-        duration: input.duration,
-      })
-
-      return await tx.save(appointment)
+      return await transcationManager.save(appointment)
     })
+  }
+
+  async findById(id: number): Promise<Appointment | null> {
+    return this.findOne({ where: { id } })
+  }
+
+  async findAll(
+    filter: AppointmentFindFilter,
+  ): Promise<[Appointment[], number]> {
+    const where: FindOptionsWhere<Appointment> = {}
+
+    if (filter.doctorId) where.doctorId = filter.doctorId
+    if (filter.patientId) where.patientId = filter.patientId
+    if (filter.status) where.status = filter.status
+
+    if (filter.from && filter.to) {
+      where.startsAt = And(MoreThanOrEqual(filter.from), LessThan(filter.to))
+    } else if (filter.from) {
+      where.startsAt = MoreThanOrEqual(filter.from)
+    } else if (filter.to) {
+      where.startsAt = LessThan(filter.to)
+    }
+
+    return this.findAndCount({
+      where,
+      order: { startsAt: 'ASC' },
+      skip: (filter.page - 1) * filter.pageSize,
+      take: filter.pageSize,
+    })
+  }
+
+  async hasAppointmentInProgress(
+    doctorId: number,
+    patientId: number,
+  ): Promise<boolean> {
+    const inProgressOrDone = this.exists({
+      where: {
+        doctorId,
+        patientId,
+        status: In([APPOINTMENT_STATUS.IN_PROGRESS, APPOINTMENT_STATUS.DONE]),
+      },
+    })
+
+    return inProgressOrDone
+  }
+
+  async findAppointmentInPeriod(
+    doctorId: number,
+    fromDate: Date,
+    toDate: Date,
+  ): Promise<Appointment[]> {
+    const appointment = this.find({
+      where: {
+        doctorId,
+        status: Not(APPOINTMENT_STATUS.CANCELLED),
+        startsAt: LessThan(fromDate),
+        endsAt: MoreThan(toDate),
+      },
+      order: { startsAt: 'ASC' },
+    })
+
+    return appointment
   }
 }

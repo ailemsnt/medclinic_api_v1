@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 export const APPOINTMENT_STATUS = {
-  scheduled: 'scheduled',
+  SCHEDULED: 'scheduled',
   IN_PROGRESS: 'in_progress',
   DONE: 'done',
   CANCELLED: 'cancelled',
@@ -14,17 +14,17 @@ export class Appointment {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
   id!: number
 
-  @Column('bigint')
+  @Column('integer')
   patientId!: number
 
-  @Column('bigint')
+  @Column('integer')
   doctorId!: number
 
   @Column('timestamptz')
-  date!: Date
+  startsAt!: Date
 
-  @Column('integer')
-  duration!: number
+  @Column('timestamptz')
+  endsAt!: Date
 
   @Column('enum', {
     enum: APPOINTMENT_STATUS,
