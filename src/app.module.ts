@@ -10,6 +10,7 @@ import { DatabaseModule } from './@common/database/database.module'
 import { JwtModule } from './auth/jwt/jwt.module'
 import { HealthController } from './health/health.controller'
 import { Patient } from './@common/entities/patient'
+import { AppointmentModule } from './appointment/appointment.module'
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Patient } from './@common/entities/patient'
     AuthModule,
     DoctorModule,
     JwtModule,
+    AppointmentModule,
   ],
   controllers: [HealthController],
   providers: [
