@@ -52,7 +52,7 @@ export class AuthService {
 
     const token = this.jwtService.sign(
       {
-        role: user.roles.map((role) => role.name), //TODO: ver assinatura
+        roles: user.roles.map((role) => role.name), //TODO: ver assinatura
       },
       user.id,
     )

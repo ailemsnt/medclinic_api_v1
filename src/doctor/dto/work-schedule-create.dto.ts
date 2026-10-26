@@ -2,33 +2,34 @@ import { Type } from 'class-transformer'
 import {
   IsArray,
   IsInt,
-  IsMilitaryTime,
+  Matches,
   Max,
   Min,
   ValidateNested,
 } from 'class-validator'
 
+const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/
+
 export class ShiftDto {
-  @IsMilitaryTime()
-  startTime!: string
-
-  @IsMilitaryTime()
-  endTime!: string
-}
-
-export class CreateWorkScheduleDto {
-  @IsInt()
-  @Min(0)
-  @Max(6)
+  @IsInt({ message: 'weekDay deve ser um número inteiro.' })
+  @Min(0, { message: 'weekDay deve estar entre 0 e 6.' })
+  @Max(6, { message: 'weekDay deve estar entre 0 e 6.' })
   weekDay!: number
 
-  @IsInt()
-  @Min(1)
-  @Max(1440)
-  durationMinutes!: number
+  @Matches(HH_MM, { message: 'startTime deve estar no formato HH:MM.' })
+  startTime!: string
 
-  @Type(() => ShiftDto)
-  @IsArray()
+  @Matches(HH_MM, { message: 'endTime deve estar no formato HH:MM.' })
+  endTime!: string
+
+  @IsInt({ message: 'slotDurationMinutes deve ser um número inteiro.' })
+  @Min(1, { message: 'slotDurationMinutes deve ser maior que zero.' })
+  slotDurationMinutes!: number
+}
+
+export class WorkScheduleCreateDto {
+  @IsArray({ message: 'shifts deve ser uma lista.' })
   @ValidateNested({ each: true })
+  @Type(() => ShiftDto)
   shifts!: ShiftDto[]
 }

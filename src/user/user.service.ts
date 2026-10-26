@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { UserRepository } from './user.repository'
 import { UserCreateDto } from './dto/user-create.dto'
-import { User } from '../@common/entities/user.entity'
+import { User } from '../@common/entities/user'
 import { UserResponseDto } from './dto/user-response.dto'
 import { plainToInstance } from 'class-transformer'
 

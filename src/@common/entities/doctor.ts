@@ -9,7 +9,7 @@ import {
 } from 'typeorm'
 
 import { WorkSchedule } from './work-schedule'
-import { User } from './user.entity'
+import { User } from './user'
 
 @Entity('doctor')
 export class Doctor {

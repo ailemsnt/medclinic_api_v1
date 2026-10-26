@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common'
-import { RoleName } from '../entities/role.entity'
+import { RoleName } from '../entities/role'
 
 export interface RequireRoleOptions {
   mode: 'some' | 'every'

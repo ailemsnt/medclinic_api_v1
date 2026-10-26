@@ -8,12 +8,6 @@ import { PatientListDto } from './dto/patient-list.dto'
 import { PaginatedResponseDto } from '../@common/dto/paginated-response.dto'
 import { PatientUpdateDto } from './dto/patient-update.dto'
 
-export interface PatientFindFilter {
-  page: number
-  pageSize: number
-  name?: string
-}
-
 @Injectable()
 export class PatientService {
   constructor(private readonly patientRepository: PatientRepository) {}

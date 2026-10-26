@@ -1,12 +1,12 @@
 import { expect, it, describe, beforeAll, jest } from '@jest/globals'
 import { UserService } from '../../user/user.service'
 import { AuthRegisterDto } from '../dto/auth-register.dto'
-import { User } from '../../@common/entities/user.entity'
+import { User } from '../../@common/entities/user'
 import { AuthService } from '../auth.service'
 import { JwtService } from '../jwt/jwt.service'
 import { ConflictException, UnauthorizedException } from '@nestjs/common'
 import { AuthLoginDto } from '../dto/auth-login.dto'
-import { RoleName } from '../../@common/entities/role.entity'
+import { RoleName } from '../../@common/entities/role'
 
 class UserServiceMock implements Partial<UserService> {
   private memoryDb = new Map<number, User>()

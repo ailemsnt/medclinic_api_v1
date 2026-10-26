@@ -9,11 +9,13 @@ import { JwtGuard } from './@common/guards/jwt.guard'
 import { DatabaseModule } from './@common/database/database.module'
 import { JwtModule } from './auth/jwt/jwt.module'
 import { HealthController } from './health/health.controller'
+import { Patient } from './@common/entities/patient'
 
 @Module({
   imports: [
     DatabaseModule,
     UserModule,
+    Patient,
     AdminModule,
     AuthModule,
     DoctorModule,

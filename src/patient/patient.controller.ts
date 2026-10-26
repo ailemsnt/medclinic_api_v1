@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common'
 import { PatientService } from './patient.service'
 import { RequireRole } from '../@common/decorators/roles.decorator'
-import { RoleName } from '../@common/entities/role.entity'
+import { RoleName } from '../@common/entities/role'
 import { PatientCreateDto } from './dto/patient-create.dto'
 import { PatientResponseDto } from './dto/patient-response.dto'
 import { PaginatedResponseDto } from '../@common/dto/paginated-response.dto'
