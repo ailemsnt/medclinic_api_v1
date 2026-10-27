@@ -3,13 +3,13 @@ import { DataSource, LoggerOptions } from 'typeorm'
 
 import { SnakeCaseNamingStrategy } from './snake-case-naming-pattern'
 import { User } from '../entities/user'
-import { Doctor } from '../entities/doctor'
+import { Doctor } from '../../doctor/doctor.entity'
 import { FactoryProvider, Type } from '@nestjs/common'
 import { Role } from '../entities/role'
 import { Appointment } from '../entities/appointment'
 import { MedicalRecord } from '../entities/medical-record'
-import { Patient } from '../entities/patient'
-import { WorkSchedule } from '../entities/work-schedule'
+import { Patient } from '../../patient/patient.entity'
+import { WorkSchedule } from '../../doctor/work-schedule.entity'
 
 export const ENTITIES = [
   Role,

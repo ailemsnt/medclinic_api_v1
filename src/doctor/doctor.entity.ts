@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm'
 
-import { WorkSchedule } from './work-schedule'
-import { User } from './user'
+import { WorkSchedule } from './work-schedule.entity'
+import { User } from '../@common/entities/user'
 
 @Entity('doctor')
 export class Doctor {

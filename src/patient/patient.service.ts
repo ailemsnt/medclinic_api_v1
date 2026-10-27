@@ -1,4 +1,4 @@
-import { Patient } from './../@common/entities/patient'
+import { Patient } from './patient.entity'
 import { Injectable } from '@nestjs/common'
 import { PatientRepository } from './patient.repository'
 import { PatientCreateDto } from './dto/patient-create.dto'

@@ -5,7 +5,7 @@ import { DoctorRepository } from './doctor.repository'
 import { ShiftDto, WorkScheduleCreateDto } from './dto/work-schedule-create.dto'
 import { WorkScheduleResponseDto } from './dto/work-schedule-response.dto'
 import { timeToMinutes } from './utils/utils'
-import { WorkScheduleConfiguration } from '../@common/entities/work-schedule'
+import { WorkScheduleConfiguration } from './work-schedule.entity'
 
 @Injectable()
 export class WorkScheduleService {

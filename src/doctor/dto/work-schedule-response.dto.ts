@@ -1,4 +1,4 @@
-import { WorkScheduleConfiguration } from '../../@common/entities/work-schedule'
+import { WorkScheduleConfiguration } from '../work-schedule.entity'
 import { timeToMinutes } from '../utils/utils'
 import { ShiftDto } from './work-schedule-create.dto'
 

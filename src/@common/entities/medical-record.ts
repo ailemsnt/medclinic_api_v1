@@ -5,7 +5,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
-import { Patient } from './patient'
+import { Patient } from '../../patient/patient.entity'
 
 @Entity()
 export class MedicalRecord {

@@ -1,4 +1,4 @@
-import { Doctor } from '../../@common/entities/doctor'
+import { Doctor } from '../doctor.entity'
 
 export class DoctorUserResponseDto {
   id!: number

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Patient } from './../@common/entities/patient'
+import { Patient } from './patient.entity'
 import { ILike, Repository } from 'typeorm'
 import { isUniqueViolation } from '../@common/database/unique-violation'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
