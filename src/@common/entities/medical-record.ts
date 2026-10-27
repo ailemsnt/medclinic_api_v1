@@ -1,12 +1,16 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
 import { Patient } from '../../patient/patient.entity'
+import { Doctor } from '../../doctor/doctor.entity'
 
+@Index(['patientId', 'createdAt'])
 @Entity()
 export class MedicalRecord {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
@@ -19,6 +23,16 @@ export class MedicalRecord {
   patientId!: number
 
   @JoinColumn({ name: 'patient_id' })
-  @OneToOne(() => Patient)
+  @ManyToOne(() => Patient)
   patient!: Patient
+
+  @Column('int')
+  doctorId!: number
+
+  @JoinColumn({ name: 'doctor_id' })
+  @ManyToOne(() => Doctor)
+  doctor!: Doctor
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
 }
