@@ -151,6 +151,18 @@ export class AppointmentRepository extends Repository<Appointment> {
     })
   }
 
+  async updateStatus(
+    id: number,
+    currentStatus: APPOINTMENT_STATUS,
+    newStatus: APPOINTMENT_STATUS,
+  ): Promise<boolean> {
+    const updateResult = await this.update(
+      { id, status: currentStatus },
+      { status: newStatus },
+    )
+    return (updateResult.affected ?? 0) > 0
+  }
+
   async findById(id: number): Promise<Appointment | null> {
     return this.findOne({ where: { id } })
   }
