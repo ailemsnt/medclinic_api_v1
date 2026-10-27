@@ -12,11 +12,11 @@ import {
 } from 'typeorm'
 
 import { APPOINTMENT_STATUS } from '../@common/entities/appointment'
-import { Doctor } from '../@common/entities/doctor'
-import { Patient } from '../@common/entities/patient'
-import { WorkSchedule } from '../@common/entities/work-schedule'
+import { Patient } from '../patient/patient.entity'
+import { WorkSchedule } from '../doctor/work-schedule.entity'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
 import { timeToMinutes, toClinicTime } from '../doctor/utils/utils'
+import { Doctor } from '../doctor/doctor.entity'
 
 export interface AppointmentCreateInput {
   doctorId: number
@@ -177,6 +177,22 @@ export class AppointmentRepository extends Repository<Appointment> {
       order: { startsAt: 'ASC' },
       skip: (filter.page - 1) * filter.pageSize,
       take: filter.pageSize,
+    })
+  }
+
+  async findActiveByDoctorInPeriod(
+    doctorId: number,
+    from: Date,
+    to: Date,
+  ): Promise<Appointment[]> {
+    return this.find({
+      where: {
+        doctorId,
+        status: Not(APPOINTMENT_STATUS.CANCELLED),
+        startsAt: LessThan(to),
+        endsAt: MoreThan(from),
+      },
+      order: { startsAt: 'ASC' },
     })
   }
 

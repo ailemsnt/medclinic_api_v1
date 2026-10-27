@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { Repository } from 'typeorm'
-import { Doctor } from '../@common/entities/doctor'
 import { Role, RoleName } from '../@common/entities/role'
 import { User } from '../@common/entities/user'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
 import { isUniqueViolation } from '../@common/database/unique-violation'
+import { Doctor } from './doctor.entity'
 export interface DoctorCreateInput {
   name: string
   email: string

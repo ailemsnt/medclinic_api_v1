@@ -1,4 +1,4 @@
-import { Patient } from './../@common/entities/patient'
+import { Patient } from './patient.entity'
 import { Module } from '@nestjs/common'
 import { PatientController } from './patient.controller'
 import { PatientService } from './patient.service'

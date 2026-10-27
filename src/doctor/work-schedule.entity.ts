@@ -5,7 +5,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
-import { Doctor } from './doctor'
+import { Doctor } from './doctor.entity'
 
 export class WorkScheduleConfiguration {
   weekDay!: number // 0-6
