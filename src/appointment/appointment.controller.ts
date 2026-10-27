@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common'
@@ -17,6 +18,7 @@ import { GetUserJwt } from '../@common/decorators/get-user-jwt.decorator'
 import type { AuthUserDto } from '../@common/dto/auth-user.dto'
 import { AppointmentListDto } from './dto/appointment-list.dto'
 import { PaginatedResponseDto } from '../@common/dto/paginated-response.dto'
+import { AppointmentStatusUpdateDto } from './dto/appointment-status-update.dto'
 
 @Controller('appointments')
 export class AppointmentController {
@@ -44,5 +46,14 @@ export class AppointmentController {
     @GetUserJwt() user: AuthUserDto,
   ): Promise<AppointmentResponseDto> {
     return this.appointmentService.findById(id, user)
+  }
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AppointmentStatusUpdateDto,
+    @GetUserJwt() user: AuthUserDto,
+  ): Promise<AppointmentResponseDto> {
+    return this.appointmentService.updateStatus(id, dto, user)
   }
 }

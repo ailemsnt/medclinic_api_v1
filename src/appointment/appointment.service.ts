@@ -16,9 +16,36 @@ import {
   DoctorCalendarResponseDto,
 } from '../doctor/dto/doctor-calendar.dto'
 import { WorkScheduleResponseDto } from '../doctor/dto/work-schedule-response.dto'
+import {
+  Appointment,
+  APPOINTMENT_STATUS,
+} from '../@common/entities/appointment'
+import { AppointmentStatusUpdateDto } from './dto/appointment-status-update.dto'
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 const MAX_CALENDAR_DAYS = 31
+const APPOINTMENT_DOCTOR = 'appointmentDoctor'
+type TransitionActor = RoleName | typeof APPOINTMENT_DOCTOR
+
+const ALLOWED_TRANSITIONS: Record<
+  APPOINTMENT_STATUS,
+  Partial<Record<APPOINTMENT_STATUS, TransitionActor[]>>
+> = {
+  [APPOINTMENT_STATUS.SCHEDULED]: {
+    [APPOINTMENT_STATUS.IN_PROGRESS]: [RoleName.ADMIN, APPOINTMENT_DOCTOR],
+    [APPOINTMENT_STATUS.CANCELLED]: [
+      RoleName.ADMIN,
+      RoleName.SECRETARY,
+      APPOINTMENT_DOCTOR,
+    ],
+  },
+  [APPOINTMENT_STATUS.IN_PROGRESS]: {
+    [APPOINTMENT_STATUS.DONE]: [RoleName.ADMIN, APPOINTMENT_DOCTOR],
+    [APPOINTMENT_STATUS.CANCELLED]: [RoleName.ADMIN, APPOINTMENT_DOCTOR],
+  },
+  [APPOINTMENT_STATUS.DONE]: {},
+  [APPOINTMENT_STATUS.CANCELLED]: {},
+}
 
 @Injectable()
 export class AppointmentService {
@@ -56,6 +83,56 @@ export class AppointmentService {
     }
 
     return AppointmentResponseDto.resultEntity(appointment)
+  }
+
+  async updateStatus(
+    id: number,
+    dto: AppointmentStatusUpdateDto,
+    user: AuthUserDto,
+  ): Promise<AppointmentResponseDto> {
+    const appointment = await this.appointmentRepository.findById(id)
+    if (!appointment) {
+      throw new DomainError(
+        'Agendamento não encontrado',
+        ERROR_CODE.RECURSO_NAO_ENCONTRADO,
+      )
+    }
+
+    const allowedActors = ALLOWED_TRANSITIONS[appointment.status][dto.status]
+    if (!allowedActors) {
+      throw new DomainError(
+        `Transição de ${appointment.status} para ${dto.status} não é permitida.`,
+        ERROR_CODE.TRANSICAO_INVALIDA,
+      )
+    }
+
+    const userActors = await this.getTransitionActors(user, appointment)
+    const canTransition = allowedActors.some((actor) =>
+      userActors.includes(actor),
+    )
+    if (!canTransition) {
+      throw new DomainError(
+        'Seu perfil não pode fazer esta alteração de status.',
+        ERROR_CODE.ACESSO_NEGADO,
+      )
+    }
+
+    const updated = await this.appointmentRepository.updateStatus(
+      id,
+      appointment.status,
+      dto.status,
+    )
+    if (!updated) {
+      throw new DomainError(
+        'O status do agendamento foi alterado por outra pessoa. Consulte novamente.',
+        ERROR_CODE.TRANSICAO_INVALIDA,
+      )
+    }
+
+    return AppointmentResponseDto.resultEntity({
+      ...appointment,
+      status: dto.status,
+    })
   }
 
   async findAll(
@@ -142,5 +219,21 @@ export class AppointmentService {
 
     const doctor = await this.doctorRepository.findByUserId(Number(user.sub))
     return doctor?.id ?? null
+  }
+
+  private async getTransitionActors(
+    user: AuthUserDto,
+    appointment: Appointment,
+  ): Promise<TransitionActor[]> {
+    const roles: TransitionActor[] = [...(user.data.roles ?? [])]
+
+    if (roles.includes(RoleName.DOCTOR)) {
+      const doctor = await this.doctorRepository.findByUserId(Number(user.sub))
+      if (doctor?.id === appointment.doctorId) {
+        roles.push(APPOINTMENT_DOCTOR)
+      }
+    }
+
+    return roles
   }
 }
