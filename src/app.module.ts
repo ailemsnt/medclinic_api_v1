@@ -8,18 +8,20 @@ import { JwtGuard } from './@common/guards/jwt.guard'
 import { DatabaseModule } from './@common/database/database.module'
 import { JwtModule } from './auth/jwt/jwt.module'
 import { HealthController } from './health/health.controller'
-import { Patient } from './patient/patient.entity'
 import { AppointmentModule } from './appointment/appointment.module'
+import { PatientModule } from './patient/patient.module'
+import { MedicalRecordModule } from './medical-record/medical-record.module'
 
 @Module({
   imports: [
     DatabaseModule,
     UserModule,
-    Patient,
+    PatientModule,
     AuthModule,
     DoctorModule,
     JwtModule,
     AppointmentModule,
+    MedicalRecordModule,
   ],
   controllers: [HealthController],
   providers: [

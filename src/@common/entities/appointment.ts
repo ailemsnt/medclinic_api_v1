@@ -5,7 +5,7 @@ export const APPOINTMENT_STATUS = {
   IN_PROGRESS: 'in_progress',
   DONE: 'done',
   CANCELLED: 'cancelled',
-}
+} as const
 export type APPOINTMENT_STATUS =
   (typeof APPOINTMENT_STATUS)[keyof typeof APPOINTMENT_STATUS]
 

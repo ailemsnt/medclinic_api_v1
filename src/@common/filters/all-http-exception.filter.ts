@@ -4,6 +4,7 @@ import {
   Catch,
   ForbiddenException,
   HttpException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
 import { BaseExceptionFilter } from '@nestjs/core'
@@ -12,7 +13,7 @@ import { DomainError, ERROR_CODE } from '../errors/domain.error'
 
 @Catch()
 export class AllHttpExceptionFilter extends BaseExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     if (exception instanceof DomainError) {
       const httpException = new HttpException(
         {
@@ -32,7 +33,7 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
           {
             statusCode: 400,
             error: ERROR_CODE.DADOS_INVALIDOS,
-            message: exception.message,
+            message: this.getValidationMessage(exception),
           },
           400,
         ),
@@ -56,6 +57,21 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
       return
     }
 
+    if (exception instanceof NotFoundException) {
+      super.catch(
+        new HttpException(
+          {
+            statusCode: 404,
+            error: ERROR_CODE.RECURSO_NAO_ENCONTRADO,
+            message: exception.message,
+          },
+          404,
+        ),
+        host,
+      )
+      return
+    }
+
     if (exception instanceof ForbiddenException) {
       super.catch(
         new HttpException(
@@ -72,5 +88,13 @@ export class AllHttpExceptionFilter extends BaseExceptionFilter {
     }
 
     super.catch(exception, host)
+  }
+
+  /** O ValidationPipe guarda as mensagens dos campos numa lista dentro de getResponse(). */
+  private getValidationMessage(exception: BadRequestException): string {
+    const response = exception.getResponse() as { message?: unknown }
+    return Array.isArray(response.message)
+      ? response.message.join(' ')
+      : exception.message
   }
 }

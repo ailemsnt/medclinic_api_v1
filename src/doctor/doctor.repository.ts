@@ -49,18 +49,13 @@ export class DoctorRepository extends Repository<Doctor> {
   }
 
   async findById(id: number): Promise<Doctor | null> {
-    return this.findOne({
-      where: { id },
-      relations: {
-        user: {
-          roles: true,
-        },
-      },
-    })
+    return this.activeDoctorQuery().andWhere('doctor.id = :id', { id }).getOne()
   }
 
   async findByUserId(userId: number): Promise<Doctor | null> {
-    return this.findOne({ where: { userId } })
+    return this.activeDoctorQuery()
+      .andWhere('doctor.userId = :userId', { userId })
+      .getOne()
   }
 
   async findByCrm(crm: string): Promise<Doctor | null> {
@@ -75,9 +70,10 @@ export class DoctorRepository extends Repository<Doctor> {
   }
 
   async findAll(filter: DoctorFindFilter): Promise<[Doctor[], number]> {
-    const query = this.createQueryBuilder('doctor')
-      .innerJoinAndSelect('doctor.user', 'user')
-      .leftJoinAndSelect('user.roles', 'role')
+    const query = this.activeDoctorQuery()
+      .orderBy('doctor.id', 'ASC')
+      .skip((filter.page - 1) * filter.pageSize)
+      .take(filter.pageSize)
       .orderBy('doctor.id', 'ASC')
       .skip((filter.page - 1) * filter.pageSize)
       .take(filter.pageSize)
@@ -87,6 +83,14 @@ export class DoctorRepository extends Repository<Doctor> {
     }
 
     return query.getManyAndCount()
+  }
+
+  /** Médico ativo: o usuário dele não tem soft delete. */
+  private activeDoctorQuery() {
+    return this.createQueryBuilder('doctor')
+      .innerJoinAndSelect('doctor.user', 'user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .where('user.deletedAt IS NULL')
   }
 
   private translateUniqueViolation(error: unknown): unknown {

@@ -15,5 +15,6 @@ import { DoctorCalendarController } from '../doctor/doctor-calendar.controller'
     AppointmentService,
     typeOrmRepositoryFactory(AppointmentRepository, Appointment),
   ],
+  exports: [AppointmentRepository],
 })
 export class AppointmentModule {}
