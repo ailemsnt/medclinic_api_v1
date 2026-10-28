@@ -25,13 +25,13 @@ export class AuthService {
       )
     }
 
-    const token = this.jwtService.sign(
+    const accessToken = this.jwtService.sign(
       {
         roles: user.roles.map((role) => role.name),
       },
       user.id,
     )
 
-    return { token }
+    return { accessToken }
   }
 }
