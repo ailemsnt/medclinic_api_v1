@@ -9,19 +9,19 @@ import {
   MoreThanOrEqual,
   And,
   In,
+  EntityManager,
 } from 'typeorm'
 
 import { APPOINTMENT_STATUS } from '../@common/entities/appointment'
 import { Patient } from '../patient/patient.entity'
 import { WorkSchedule } from '../doctor/work-schedule.entity'
-import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
-import { timeToMinutes, toClinicTime } from '../doctor/utils/utils'
 import { Doctor } from '../doctor/doctor.entity'
 
 export interface AppointmentCreateInput {
   doctorId: number
   patientId: number
   startsAt: Date
+  endsAt: Date
 }
 
 export interface AppointmentFindFilter {
@@ -33,122 +33,48 @@ export interface AppointmentFindFilter {
   from?: Date
   to?: Date
 }
+
+export type AppointmentParticipant =
+  { doctorId: number } | { patientId: number }
+
+/** Operações que o service usa dentro da transação do agendamento. */
+export interface AppointmentTransaction {
+  lockDoctor(doctorId: number): Promise<boolean>
+  findWorkSchedule(doctorId: number): Promise<WorkSchedule | null>
+  findActiveInPeriod(
+    participant: AppointmentParticipant,
+    from: Date,
+    to: Date,
+  ): Promise<Appointment[]>
+  createAppointment(input: AppointmentCreateInput): Promise<Appointment>
+}
+
+function activeInPeriodWhere(
+  participant: AppointmentParticipant,
+  from: Date,
+  to: Date,
+): FindOptionsWhere<Appointment> {
+  return {
+    ...participant,
+    status: Not(APPOINTMENT_STATUS.CANCELLED),
+    startsAt: LessThan(to),
+    endsAt: MoreThan(from),
+  }
+}
+
 @Injectable()
 export class AppointmentRepository extends Repository<Appointment> {
-  private getSlotDuration(
-    startsAt: Date,
-    workSchedule: WorkSchedule | null,
-  ): number {
-    const { weekDay, minutes } = toClinicTime(startsAt)
-    const isWholeMinute = startsAt.getTime() % 60000 === 0
-
-    const configuration = workSchedule?.configuration
-      .filter((config) => config.weekDay === weekDay)
-      .find((config) =>
-        config.time.some((time) => {
-          const startTimeMinutes = timeToMinutes(time.startTime)
-          const endTimeMinutes = timeToMinutes(time.endTime)
-
-          return (
-            minutes >= startTimeMinutes &&
-            (minutes - startTimeMinutes) % config.duration === 0 &&
-            minutes + config.duration <= endTimeMinutes
-          )
-        }),
-      )
-
-    if (!configuration || !isWholeMinute) {
-      throw new DomainError(
-        'Horário fora da escala do médico.',
-        ERROR_CODE.HORARIO_FORA_DA_ESCALA,
-      )
-    }
-
-    return configuration.duration
+  async patientExists(patientId: number): Promise<boolean> {
+    return this.manager.getRepository(Patient).existsBy({ id: patientId })
   }
 
-  async createAppointment(input: AppointmentCreateInput): Promise<Appointment> {
-    // TODO: Validar se a data do agendamento não é no passado
-    const patientExists = await this.manager.getRepository(Patient).findOne({
-      where: {
-        id: input.patientId,
-      },
-    })
-
-    if (!patientExists) {
-      throw new DomainError(
-        'Paciente não encontrado',
-        ERROR_CODE.RECURSO_NAO_ENCONTRADO,
-      )
-    }
-
-    return await this.manager.transaction(async (transcationManager) => {
-      const doctorRepository = transcationManager.getRepository(Doctor)
-
-      const doctorExists = await doctorRepository.findOne({
-        where: {
-          id: input.doctorId,
-        },
-        lock: {
-          mode: 'pessimistic_write',
-        },
-      })
-
-      if (!doctorExists) {
-        throw new DomainError(
-          'Médico não encontrado',
-          ERROR_CODE.RECURSO_NAO_ENCONTRADO,
-        )
-      }
-
-      const doctorWorkSchedule = await transcationManager
-        .getRepository(WorkSchedule)
-        .findOneOrFail({
-          where: {
-            doctorId: input.doctorId,
-          },
-        })
-
-      const duration = this.getSlotDuration(input.startsAt, doctorWorkSchedule)
-      const endsAt = new Date(input.startsAt.getTime() + duration * 60 * 1000)
-
-      //to check conflicts on schedule
-      const overlapSchedule: FindOptionsWhere<Appointment> = {
-        status: Not(APPOINTMENT_STATUS.CANCELLED),
-        startsAt: LessThan(endsAt),
-        endsAt: MoreThan(input.startsAt),
-      }
-
-      if (
-        await transcationManager.exists(Appointment, {
-          where: { ...overlapSchedule, doctorId: input.doctorId },
-        })
-      ) {
-        throw new DomainError(
-          'Horário indisponível',
-          ERROR_CODE.HORARIO_INDISPONIVEL,
-        )
-      }
-
-      if (
-        await transcationManager.exists(Appointment, {
-          where: { ...overlapSchedule, patientId: input.patientId },
-        })
-      ) {
-        throw new DomainError(
-          'O pacinte já possui consulta agendada neste horário',
-          ERROR_CODE.PACIENTE_INDISPONIVEL,
-        )
-      }
-
-      const appointment = transcationManager.create(Appointment, {
-        ...input,
-        endsAt,
-        status: APPOINTMENT_STATUS.SCHEDULED,
-      })
-
-      return await transcationManager.save(appointment)
-    })
+  /** Tudo o que roda em `work` usa o EntityManager da transação. */
+  async runInTransaction<T>(
+    work: (transaction: AppointmentTransaction) => Promise<T>,
+  ): Promise<T> {
+    return this.manager.transaction((transactionManager) =>
+      work(this.buildTransaction(transactionManager)),
+    )
   }
 
   async updateStatus(
@@ -198,46 +124,53 @@ export class AppointmentRepository extends Repository<Appointment> {
     to: Date,
   ): Promise<Appointment[]> {
     return this.find({
-      where: {
-        doctorId,
-        status: Not(APPOINTMENT_STATUS.CANCELLED),
-        startsAt: LessThan(to),
-        endsAt: MoreThan(from),
-      },
+      where: activeInPeriodWhere({ doctorId }, from, to),
       order: { startsAt: 'ASC' },
     })
   }
 
-  async hasAppointmentInProgress(
-    doctorId: number,
-    patientId: number,
-  ): Promise<boolean> {
-    const inProgressOrDone = this.exists({
+  /** Vínculo clínico (RN14): consulta em andamento ou concluída entre os dois. */
+  async hasClinicalLink(doctorId: number, patientId: number): Promise<boolean> {
+    return this.exists({
       where: {
         doctorId,
         patientId,
         status: In([APPOINTMENT_STATUS.IN_PROGRESS, APPOINTMENT_STATUS.DONE]),
       },
     })
-
-    return inProgressOrDone
   }
 
-  async findAppointmentInPeriod(
-    doctorId: number,
-    fromDate: Date,
-    toDate: Date,
-  ): Promise<Appointment[]> {
-    const appointment = this.find({
-      where: {
-        doctorId,
-        status: Not(APPOINTMENT_STATUS.CANCELLED),
-        startsAt: LessThan(fromDate),
-        endsAt: MoreThan(toDate),
+  private buildTransaction(
+    transactionManager: EntityManager,
+  ): AppointmentTransaction {
+    return {
+      lockDoctor: async (doctorId) => {
+        const doctor = await transactionManager
+          .getRepository(Doctor)
+          .createQueryBuilder('doctor')
+          .innerJoin('doctor.user', 'user')
+          .where('doctor.id = :doctorId', { doctorId })
+          .andWhere('user.deletedAt IS NULL')
+          .setLock('pessimistic_write', undefined, ['doctor'])
+          .getOne()
+        return doctor !== null
       },
-      order: { startsAt: 'ASC' },
-    })
 
-    return appointment
+      findWorkSchedule: (doctorId) =>
+        transactionManager.findOne(WorkSchedule, { where: { doctorId } }),
+
+      findActiveInPeriod: (participant, from, to) =>
+        transactionManager.find(Appointment, {
+          where: activeInPeriodWhere(participant, from, to),
+        }),
+
+      createAppointment: (input) =>
+        transactionManager.save(
+          transactionManager.create(Appointment, {
+            ...input,
+            status: APPOINTMENT_STATUS.SCHEDULED,
+          }),
+        ),
+    }
   }
 }
