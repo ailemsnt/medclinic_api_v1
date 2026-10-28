@@ -20,7 +20,7 @@
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
-    "strictBindCallApply": false,
+    "strict": true,
     "noFallthroughCasesInSwitch": false
   },
   "include": ["src/**/*"]

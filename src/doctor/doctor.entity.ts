@@ -19,7 +19,7 @@ export class Doctor {
   @Column('varchar', { length: 20, unique: true })
   crm!: string
 
-  @Column('number')
+  @Column('int')
   userId!: number
 
   @OneToOne(() => User)

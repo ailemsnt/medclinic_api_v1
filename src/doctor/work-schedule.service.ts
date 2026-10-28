@@ -98,7 +98,7 @@ export class WorkScheduleService {
   }
 
   private async ensureDoctorExists(doctorId: number): Promise<void> {
-    const exists = await this.doctorRepository.existsBy({ id: doctorId })
+    const exists = await this.doctorRepository.findById(doctorId)
     if (!exists) {
       throw new DomainError(
         'Médico não encontrado',

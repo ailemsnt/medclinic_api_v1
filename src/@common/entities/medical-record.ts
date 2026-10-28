@@ -19,7 +19,7 @@ export class MedicalRecord {
   @Column('text')
   text!: string
 
-  @Column('bigint')
+  @Column('int')
   patientId!: number
 
   @JoinColumn({ name: 'patient_id' })

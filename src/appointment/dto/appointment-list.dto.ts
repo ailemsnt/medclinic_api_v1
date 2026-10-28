@@ -1,7 +1,16 @@
-import { IsDateString, IsIn, IsInt, IsOptional, Min } from 'class-validator'
+import {
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  Matches,
+  Min,
+} from 'class-validator'
 import { PaginationQueryDto } from '../../@common/dto/pagination-query.dto'
 import { Type } from 'class-transformer'
 import { APPOINTMENT_STATUS } from '../../@common/entities/appointment'
+
+const YYYY_MM_DD = /^\d{4}-\d{2}-\d{2}$/
 
 export class AppointmentListDto extends PaginationQueryDto {
   @IsOptional()
@@ -21,6 +30,7 @@ export class AppointmentListDto extends PaginationQueryDto {
   status?: APPOINTMENT_STATUS
 
   @IsOptional()
+  @Matches(YYYY_MM_DD, { message: 'from deve estar no formato YYYY-MM-DD.' })
   @IsDateString(
     { strict: true },
     { message: 'from deve estar no formato YYYY-MM-DD.' },
@@ -28,6 +38,7 @@ export class AppointmentListDto extends PaginationQueryDto {
   from?: string
 
   @IsOptional()
+  @Matches(YYYY_MM_DD, { message: 'to deve estar no formato YYYY-MM-DD.' })
   @IsDateString(
     { strict: true },
     { message: 'to deve estar no formato YYYY-MM-DD.' },
