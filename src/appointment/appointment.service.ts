@@ -1,15 +1,23 @@
 import { Injectable } from '@nestjs/common'
-import { AppointmentRepository } from './appointment.repository'
+import {
+  AppointmentRepository,
+  AppointmentTransaction,
+} from './appointment.repository'
 import { AppointmentCreateDto } from './dto/appointment-create.dto'
 import { DoctorRepository } from '../doctor/doctor.repository'
 import { AppointmentResponseDto } from './dto/appointment-response.dto'
 import { PaginatedResponseDto } from '../@common/dto/paginated-response.dto'
-import { clinicDayStart } from '../doctor/utils/utils'
+import {
+  clinicDayStart,
+  timeToMinutes,
+  toClinicTime,
+} from '../doctor/utils/utils'
 import { AuthUserDto } from '../@common/dto/auth-user.dto'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
 import { RoleName } from '../@common/entities/role'
 import { AppointmentListDto } from './dto/appointment-list.dto'
 import { WorkScheduleRepository } from '../doctor/work-schedule.repository'
+
 import {
   DoctorCalendarAppointmentDto,
   DoctorCalendarQueryDto,
@@ -21,8 +29,10 @@ import {
   APPOINTMENT_STATUS,
 } from '../@common/entities/appointment'
 import { AppointmentStatusUpdateDto } from './dto/appointment-status-update.dto'
+import { WorkSchedule } from '../doctor/work-schedule.entity'
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const ONE_MINUTE_MS = 60 * 1000
+const ONE_DAY_MS = 24 * 60 * ONE_MINUTE_MS
 const MAX_CALENDAR_DAYS = 31
 const APPOINTMENT_DOCTOR = 'appointmentDoctor'
 type TransitionActor = RoleName | typeof APPOINTMENT_DOCTOR
@@ -47,6 +57,15 @@ const ALLOWED_TRANSITIONS: Record<
   [APPOINTMENT_STATUS.CANCELLED]: {},
 }
 
+export interface Period {
+  startsAt: Date
+  endsAt: Date
+}
+
+/* Sobrepõe quando um começa antes do outro terminar. Encostado não conflita. */
+export function periodsOverlap(first: Period, second: Period): boolean {
+  return first.startsAt < second.endsAt && second.startsAt < first.endsAt
+}
 @Injectable()
 export class AppointmentService {
   constructor(
@@ -56,13 +75,118 @@ export class AppointmentService {
   ) {}
 
   async create(dto: AppointmentCreateDto): Promise<AppointmentResponseDto> {
-    const appointment = await this.appointmentRepository.createAppointment({
-      doctorId: dto.doctorId,
-      patientId: dto.patientId,
-      startsAt: new Date(dto.startsAt),
-    })
+    const startsAt = new Date(dto.startsAt)
+
+    const patientExists = await this.appointmentRepository.patientExists(
+      dto.patientId,
+    )
+    if (!patientExists) {
+      throw new DomainError(
+        'Paciente não encontrado',
+        ERROR_CODE.RECURSO_NAO_ENCONTRADO,
+      )
+    }
+
+    const appointment = await this.appointmentRepository.runInTransaction(
+      (transaction) =>
+        this.createInTransaction(transaction, {
+          doctorId: dto.doctorId,
+          patientId: dto.patientId,
+          startsAt,
+        }),
+    )
 
     return AppointmentResponseDto.resultEntity(appointment)
+  }
+
+  /** RF06/RF07: valida e grava com a linha do médico travada até o fim. */
+  private async createInTransaction(
+    transaction: AppointmentTransaction,
+    input: { doctorId: number; patientId: number; startsAt: Date },
+  ): Promise<Appointment> {
+    const doctorExists = await transaction.lockDoctor(input.doctorId)
+    if (!doctorExists) {
+      throw new DomainError(
+        'Médico não encontrado',
+        ERROR_CODE.RECURSO_NAO_ENCONTRADO,
+      )
+    }
+
+    const workSchedule = await transaction.findWorkSchedule(input.doctorId)
+    const duration = this.getSlotDuration(input.startsAt, workSchedule)
+    const newPeriod: Period = {
+      startsAt: input.startsAt,
+      endsAt: new Date(input.startsAt.getTime() + duration * ONE_MINUTE_MS),
+    }
+
+    const doctorAppointments = await transaction.findActiveInPeriod(
+      { doctorId: input.doctorId },
+      newPeriod.startsAt,
+      newPeriod.endsAt,
+    )
+    if (
+      doctorAppointments.some((existing) => periodsOverlap(existing, newPeriod))
+    ) {
+      throw new DomainError(
+        'Este horário acabou de ser ocupado.',
+        ERROR_CODE.HORARIO_INDISPONIVEL,
+      )
+    }
+
+    const patientAppointments = await transaction.findActiveInPeriod(
+      { patientId: input.patientId },
+      newPeriod.startsAt,
+      newPeriod.endsAt,
+    )
+    if (
+      patientAppointments.some((existing) =>
+        periodsOverlap(existing, newPeriod),
+      )
+    ) {
+      throw new DomainError(
+        'O paciente já possui consulta neste horário.',
+        ERROR_CODE.PACIENTE_INDISPONIVEL,
+      )
+    }
+
+    return transaction.createAppointment({
+      doctorId: input.doctorId,
+      patientId: input.patientId,
+      ...newPeriod,
+    })
+  }
+
+  /** RN07: dentro de um turno, alinhado à grade e cabendo inteiro no turno. */
+  private getSlotDuration(
+    startsAt: Date,
+    workSchedule: WorkSchedule | null,
+  ): number {
+    const { weekDay, minutes } = toClinicTime(startsAt)
+    const isWholeMinute = startsAt.getTime() % ONE_MINUTE_MS === 0
+
+    const configuration = workSchedule?.configuration
+      .filter((config) => config.weekDay === weekDay)
+      .find((config) =>
+        config.time.some((time) => {
+          const startTimeMinutes = timeToMinutes(time.startTime)
+          const endTimeMinutes = timeToMinutes(time.endTime)
+
+          return (
+            minutes >= startTimeMinutes &&
+            (minutes - startTimeMinutes) % config.duration === 0 &&
+            minutes + config.duration <= endTimeMinutes
+          )
+        }),
+      )
+
+    if (!configuration || !isWholeMinute) {
+      throw new DomainError(
+        'Horário fora da escala do médico.',
+        ERROR_CODE.HORARIO_FORA_DA_ESCALA,
+      )
+    }
+
+    return configuration.duration
   }
 
   async findById(
@@ -182,7 +306,7 @@ export class AppointmentService {
       )
     }
 
-    const doctorExists = await this.doctorRepository.existsBy({ id: doctorId })
+    const doctorExists = await this.doctorRepository.findById(doctorId)
     if (!doctorExists) {
       throw new DomainError(
         'Médico não encontrado',

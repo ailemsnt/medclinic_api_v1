@@ -91,7 +91,7 @@ export class MedicalRecordService {
       return null
     }
 
-    const hasLink = await this.appointmentRepository.hasAppointmentInProgress(
+    const hasLink = await this.appointmentRepository.hasClinicalLink(
       doctor.id,
       patientId,
     )
