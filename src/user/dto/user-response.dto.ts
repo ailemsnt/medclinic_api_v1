@@ -1,24 +1,19 @@
-import { Exclude, Expose } from 'class-transformer'
-import { Role } from '../../@common/entities/role'
+import { Exclude } from 'class-transformer'
+import { User } from '../../@common/entities/user'
 
 @Exclude()
 export class UserResponseDto {
-  @Expose()
   id!: number
-
-  @Expose()
   name!: string
-
-  @Expose()
   email!: string
+  roles!: string[]
 
-  @Expose()
-  roles!: Role
-
-  @Expose()
-  createdAt!: Date
-
-  constructor(partial: Partial<UserResponseDto>) {
-    Object.assign(this, partial)
+  static resultEntity(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      roles: user.roles.map((role) => role.name),
+    }
   }
 }

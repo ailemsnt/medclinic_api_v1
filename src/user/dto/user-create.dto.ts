@@ -1,5 +1,15 @@
-import { IsEmail, IsNotEmpty, IsString, Length, Matches } from 'class-validator'
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator'
 import { Transform } from 'class-transformer'
+import { RoleName } from '../../@common/entities/role'
 
 export class UserCreateDto {
   @IsString()
@@ -26,4 +36,12 @@ export class UserCreateDto {
       'A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.',
   })
   password!: string
+
+  @IsArray({ message: 'roles deve ser uma lista.' })
+  @ArrayNotEmpty({ message: 'Informe ao menos um perfil.' })
+  @IsIn([RoleName.ADMIN, RoleName.SECRETARY], {
+    each: true,
+    message: 'Perfil inválido. Use admin ou secretary.',
+  })
+  roles!: RoleName[]
 }

@@ -77,7 +77,7 @@ export class JwtGuard implements CanActivate {
     }
 
     if (!this.hasRequiredRoles(context, payload)) {
-      throw new DomainError('Token inválido', ERROR_CODE.ACESSO_NEGADO)
+      throw new DomainError('Acesso negado', ERROR_CODE.ACESSO_NEGADO)
     }
 
     this.setPayload(context, payload)
