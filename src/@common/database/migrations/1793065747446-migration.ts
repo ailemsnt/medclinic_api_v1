@@ -30,7 +30,11 @@ export class Migration1793065747446 implements MigrationInterface {
     )
 
     // Seed: perfis do sistema
-    for (const roleName of [RoleName.ADMIN, RoleName.SECRETARY, RoleName.DOCTOR]) {
+    for (const roleName of [
+      RoleName.ADMIN,
+      RoleName.SECRETARY,
+      RoleName.DOCTOR,
+    ]) {
       await queryRunner.query(
         `INSERT INTO "role" ("name") SELECT $1::varchar WHERE NOT EXISTS (SELECT 1 FROM "role" WHERE "name" = $1::varchar)`,
         [roleName],

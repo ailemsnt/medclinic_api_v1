@@ -1,25 +1,24 @@
-import {
-  ClassSerializerInterceptor,
-  Controller,
-  Get,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Get, Post } from '@nestjs/common'
 import { UserService } from './user.service'
-import { JwtGuard } from '../@common/guards/jwt.guard'
 import { GetUserJwt } from '../@common/decorators/get-user-jwt.decorator'
 import type { AuthUserDto } from '../@common/dto/auth-user.dto'
 import { UserResponseDto } from './dto/user-response.dto'
+import { RequireRole } from '../@common/decorators/roles.decorator'
+import { RoleName } from '../@common/entities/role'
+import { UserCreateDto } from './dto/user-create.dto'
 
-@UseGuards(JwtGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  @UseInterceptors(ClassSerializerInterceptor)
   async getMe(@GetUserJwt() user: AuthUserDto): Promise<UserResponseDto> {
-    const userMe = await this.userService.get(Number(user.sub)) //TODO: ver user id do me
-    return new UserResponseDto(userMe as unknown as Partial<UserResponseDto>)
+    return this.userService.getMe(Number(user.sub))
+  }
+
+  @Post()
+  @RequireRole([RoleName.ADMIN])
+  async create(@Body() dto: UserCreateDto): Promise<UserResponseDto> {
+    return this.userService.create(dto)
   }
 }
