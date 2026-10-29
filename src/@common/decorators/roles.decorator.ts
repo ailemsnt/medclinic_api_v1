@@ -1,6 +1,24 @@
-import { SetMetadata } from '@nestjs/common';
-import { Roles } from '../entities/enums/roles.enum';
+import { SetMetadata } from '@nestjs/common'
+import { RoleName } from '../entities/role'
 
-export const ROLES_KEY = 'roles';
-export const RolesAllowed = (...roles: Roles[]) =>
-  SetMetadata(ROLES_KEY, roles);
+export interface RequireRoleOptions {
+  mode: 'some' | 'every'
+}
+
+export interface RoleMetadata {
+  requiredRoles: string[]
+  mode: 'some' | 'every'
+}
+
+export const ROLES_METADATA_KEY = 'REQUIRED_ROLES'
+
+export const RequireRole = (
+  roles: RoleName[],
+  options: RequireRoleOptions = {
+    mode: 'some',
+  },
+) =>
+  SetMetadata(ROLES_METADATA_KEY, {
+    requiredRoles: roles,
+    mode: options.mode,
+  })

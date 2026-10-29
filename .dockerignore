@@ -1,5 +1,45 @@
-node_modules/
+# custom
+.git/
 dist/
-.git
+
+/test
+
+# Node
+node_modules/
+*.log
+
+# Environment
 .env
-npm-debug.log
+
+# OS
+.directory
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+
+# temp directory
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Overrides locais por maquina
+*.local.*

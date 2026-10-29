@@ -1,25 +1,25 @@
-import { env } from './@common/config/env.config';
-import { HttpAdapterHost, NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { initDatabase } from './@common/database/typeorm/typeorm';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { BadRequestExceptionFilter } from './@common/filters/bad-request-exception.filter';
+import { env } from './@common/config/env.config'
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import { ValidationPipe } from '@nestjs/common'
 
 async function bootstrap() {
-  await initDatabase();
-
-  const app = await NestFactory.create(AppModule);
-
-  const { httpAdapter } = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new BadRequestExceptionFilter(httpAdapter));
+  const app = await NestFactory.create(AppModule)
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true,      
+      transform: true,
     }),
-  );
-  await app.listen(env.PORT ?? 3000);
+  )
+
+  app.setGlobalPrefix('api/v1')
+
+  await app.listen(env.PORT, '0.0.0.0')
 }
-bootstrap().catch(console.error);
+
+bootstrap().catch((err: unknown) => {
+  console.error(err)
+  process.exit(-1)
+})

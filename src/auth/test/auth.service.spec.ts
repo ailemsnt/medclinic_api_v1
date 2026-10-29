@@ -1,179 +1,80 @@
-import {
-  expect,
-  it,
-  describe,
-  beforeAll,
-  jest,
-} from '@jest/globals';
-import { Roles } from './../../@common/entities/enums/roles.enum';
-import { UserService } from "../../user/user.service";
-import { AuthRegisterDto } from "../dto/auth-register.dto";
-import { AuthResponseDto } from '../dto/auth-response.dto';
-import { User } from '../../@common/entities/user.entity';
-import { AuthService } from '../auth.service';
-import { JwtService } from '../jwt/jwt.service';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { AuthLoginDto } from '../dto/auth-login.dto';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
+import { compare } from 'bcrypt'
+import { User } from '../../@common/entities/user'
+import { Role, RoleName } from '../../@common/entities/role'
+import { AuthService } from '../auth.service'
+import { JwtService } from '../jwt/jwt.service'
+import { UserService } from '../../user/user.service'
+import { ERROR_CODE } from '../../@common/errors/domain.error'
 
-class UserServiceMock implements Partial<UserService>{
-  private memoryDb = new Map<number, User>();
+vi.mock('../jwt/jwt.service', () => ({ JwtService: class {} }))
 
-  private idSequence = 0;
+vi.mock('bcrypt', () => ({
+  compare: vi.fn((password: string, passwordHash: string) =>
+    Promise.resolve(passwordHash === `hashed-${password}`),
+  ),
+}))
 
-  async register(user: AuthRegisterDto): Promise<AuthResponseDto>{
-    const userEntity = new User();
-    userEntity.id = ++this.idSequence;
-    userEntity.name = user.name;
-    userEntity.email = user.email;
-    userEntity.passwordHash = user.password;
-    userEntity.role = Roles.ATTENDANT;
-    userEntity.createdAt = new Date();
+function buildSecretaryUser(): User {
+  const secretaryRole = new Role()
+  secretaryRole.name = RoleName.SECRETARY
 
-    this.memoryDb.set(userEntity.id, userEntity);
-
-    return {
-      id: userEntity.id,
-      name: userEntity.name,
-      email: userEntity.email,
-      role: userEntity.role,
-      createdAt: userEntity.createdAt
-    };
-  }
-
-  async getUserByEmail(email: string): Promise<User | null>{
-    for (const user of this.memoryDb.values()){
-      if (user.email === email){
-        return user;
-      }
-    }
-    return null;
-  }
+  const user = new User()
+  user.id = 1
+  user.email = 'joana@mail.com'
+  user.passwordHash = 'hashed-SenhaForte@123'
+  user.roles = [secretaryRole]
+  return user
 }
 
-jest.mock('bcrypt',() => {
-  return {
-    genSalt: jest.fn<() => Promise<string>>().mockResolvedValue('salt'),
-    hash: jest.fn().mockImplementation((password) => {
-      return Promise.resolve(`hashed-${password}`);        
-    }),
-    compare: jest.fn().mockImplementation((password, hash) => {
-      return Promise.resolve(hash === `hashed-${password}`);
-    }),
-  }
-});
-
 describe(AuthService.name, () => {
-  const userServiceMock = new UserServiceMock();
-  const userService = userServiceMock as unknown as UserService;
+  let authService: AuthService
+  let sign: Mock<JwtService['sign']>
+  let getUserByEmail: Mock<UserService['getUserByEmail']>
 
-  beforeAll(async () =>  {
-    await userServiceMock.register({
-      name: 'Joao Maria',
-      email: 'joao@mail.com',
-      password: '123456'
-    });
-  });
+  beforeEach(() => {
+    vi.clearAllMocks()
+    sign = vi.fn<JwtService['sign']>().mockReturnValue('meutoken')
+    getUserByEmail = vi.fn<UserService['getUserByEmail']>()
 
+    authService = new AuthService(
+      { sign } as unknown as JwtService,
+      { getUserByEmail } as unknown as UserService,
+    )
+  })
 
-  describe('register', () => {
-    it('should register a new user', async () => {
-      const jwtServiceMock = {
-        sign: jest.fn().mockReturnValue('meutoken'),
-      } as unknown as JwtService;
+  it('devolve accessToken com os perfis quando a credencial é válida', async () => {
+    getUserByEmail.mockResolvedValue(buildSecretaryUser())
 
-      const service = new AuthService(jwtServiceMock, userService,);
+    const result = await authService.login({
+      email: 'joana@mail.com',
+      password: 'SenhaForte@123',
+    })
 
-      const dto: AuthRegisterDto = {
-        name: 'Joao Maria',
-        email: 'joaom@mail.com',
-        password: '123456'
-      };
+    expect(result).toEqual({ accessToken: 'meutoken' })
+    expect(compare).toHaveBeenCalledWith(
+      'SenhaForte@123',
+      'hashed-SenhaForte@123',
+    )
+    expect(sign).toHaveBeenCalledWith({ roles: [RoleName.SECRETARY] }, 1)
+  })
 
-      const result = await service.register(dto);
+  it('recusa e-mail inexistente com CREDENCIAIS_INVALIDAS', async () => {
+    getUserByEmail.mockResolvedValue(null)
 
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: 2,
-          name: 'Joao Maria',
-          email: 'joaom@mail.com'
-        })
-      );
-    });
+    await expect(
+      authService.login({ email: 'nao@mail.com', password: 'SenhaForte@123' }),
+    ).rejects.toMatchObject({ code: ERROR_CODE.CREDENCIAIS_INVALIDAS })
+    expect(compare).not.toHaveBeenCalled()
+  })
 
-    it('should throw a conflict if user exists', async () => {
-      const jwtServiceMock = {
-        sign: jest.fn().mockReturnValue('meutoken'),
-      } as unknown as JwtService;
+  it('recusa senha errada comparando pelo hash, com o mesmo erro', async () => {
+    getUserByEmail.mockResolvedValue(buildSecretaryUser())
 
-      const service = new AuthService(jwtServiceMock, userService);
-
-      const dto: AuthRegisterDto = {
-        name: 'Joao Maria',
-        email: 'joao@mail.com',
-        password: '123456'
-      };
-
-      const error = await service.register(dto).catch((error) => error as ConflictException);
-
-      expect(error).toBeInstanceOf(ConflictException);
-    });
-  });
-
-  describe('login', () => {
-    it('should login a user', async () => {
-      const jwtServiceMock = {
-        sign: jest.fn().mockReturnValue('meutoken'),
-      } as unknown as JwtService;
-
-      const service = new AuthService(jwtServiceMock, userService);
-
-      const dto: AuthLoginDto = {
-        email: 'joaom@mail.com',
-        password: '123456'
-      };
-
-      const result = await service.login(dto);
-
-      expect(result).toEqual({
-        token: 'meutoken',
-        user: 2,
-        role: Roles.ATTENDANT,
-        expiresIn: expect.anything(),
-      });
-    });
-
-    it('should throw a unauthorized user if not exists', async () => {
-      const jwtServiceMock = {
-        sign: jest.fn().mockReturnValue('meutoken'),
-      } as unknown as JwtService;
-
-      const service = new AuthService(jwtServiceMock, userService);
-
-      const dto: AuthLoginDto = {
-        email: 'joao1@mail.com',
-        password: '123456'
-      };
-
-      const error = await service.login(dto).catch((error) => error as UnauthorizedException);
-
-      expect(error).toBeInstanceOf(UnauthorizedException);
-    });
-
-    it('should throw a unauthorized password is invalid', async () => {
-      const jwtServiceMock = {
-        sign: jest.fn().mockReturnValue('token'),
-      } as unknown as JwtService;
-
-      const service = new AuthService(jwtServiceMock, userService);
-
-      const dto: AuthLoginDto = {
-        email: 'joao@mail.com',
-        password: '1234576'
-      };
-
-      const error = await service.login(dto).catch((error) => error as UnauthorizedException);
-
-      expect(error).toBeInstanceOf(UnauthorizedException);
-    });
-  });
-});
+    await expect(
+      authService.login({ email: 'joana@mail.com', password: 'Errada@123' }),
+    ).rejects.toMatchObject({ code: ERROR_CODE.CREDENCIAIS_INVALIDAS })
+    expect(compare).toHaveBeenCalledWith('Errada@123', 'hashed-SenhaForte@123')
+    expect(sign).not.toHaveBeenCalled()
+  })
+})

@@ -1,15 +1,9 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from './jwt/jwt.service';
-import { compare, genSalt, hash } from 'bcrypt';
-import { AuthLoginDto } from './dto/auth-login.dto';
-import { JWT_EXPIRES_IN } from '../@common/config/jwt.config';
-import { UserService } from '../user/user.service';
-import { AuthRegisterDto } from './dto/auth-register.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
+import { Injectable } from '@nestjs/common'
+import { JwtService } from './jwt/jwt.service'
+import { compare } from 'bcrypt'
+import { AuthLoginDto } from './dto/auth-login.dto'
+import { UserService } from '../user/user.service'
+import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
 
 @Injectable()
 export class AuthService {
@@ -18,45 +12,26 @@ export class AuthService {
     private readonly userService: UserService,
   ) {}
 
-  async register(user: AuthRegisterDto): Promise<AuthResponseDto> {
-    const existsUser = await this.userService.getUserByEmail(user.email);
-
-    if (existsUser) {
-      throw new ConflictException('Usuário já cadastrado');
-    }
-
-    const salt = await genSalt(10);
-    const hashPassword = await hash(user.password, salt);
-
-    return this.userService.register({
-      ...user,
-      password: hashPassword,
-    });
-  }
-
   async login(loginDto: AuthLoginDto) {
-    const user = await this.userService.getUserByEmail(loginDto.email);
+    const user = await this.userService.getUserByEmail(loginDto.email)
 
-    if (!user) {
-      throw new UnauthorizedException();
+    const isPasswordValid =
+      user !== null && (await compare(loginDto.password, user.passwordHash))
+
+    if (!user || !isPasswordValid) {
+      throw new DomainError(
+        'E-mail ou senha inválidos.',
+        ERROR_CODE.CREDENCIAIS_INVALIDAS,
+      )
     }
 
-    if (!(await compare(loginDto.password, user.passwordHash))) {
-      throw new UnauthorizedException();
-    }
-
-    const token = this.jwtService.sign(
+    const accessToken = this.jwtService.sign(
       {
-        role: user.role,
+        roles: user.roles.map((role) => role.name),
       },
       user.id,
-    );
+    )
 
-    return {
-      token,
-      user: user.id,
-      role: user.role,
-      expiresIn: JWT_EXPIRES_IN,
-    };
+    return { accessToken }
   }
 }
