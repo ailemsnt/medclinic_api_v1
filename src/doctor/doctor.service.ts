@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { DomainError, ERROR_CODE } from '../@common/errors/domain.error'
 import { DoctorCreateDto } from './dto/doctor-create.dto'
-import { DoctorResponseDto } from './dto/doctor-response'
+import { DoctorResponseDto } from './dto/doctor-response.dto'
 import { UserService } from '../user/user.service'
 import { DoctorRepository } from './doctor.repository'
 import { hashPassword } from '../@common/utils/hash-password'

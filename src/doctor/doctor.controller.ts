@@ -12,7 +12,7 @@ import { DoctorService } from './doctor.service'
 import { RequireRole } from '../@common/decorators/roles.decorator'
 import { RoleName } from '../@common/entities/role'
 import { DoctorCreateDto } from './dto/doctor-create.dto'
-import { DoctorResponseDto } from './dto/doctor-response'
+import { DoctorResponseDto } from './dto/doctor-response.dto'
 import { PaginatedResponseDto } from '../@common/dto/paginated-response.dto'
 import { DoctorListDto } from './dto/doctor-list.dto'
 
