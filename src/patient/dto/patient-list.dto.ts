@@ -8,5 +8,5 @@ export class PatientListDto extends PaginationQueryDto {
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
-  name!: string
+  name?: string
 }

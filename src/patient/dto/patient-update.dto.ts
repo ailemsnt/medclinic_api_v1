@@ -9,5 +9,5 @@ export class PatientUpdateDto {
     typeof value === 'string' ? value.trim() : value,
   )
   @Length(1, 255, { message: 'Tamanho inválido para o nome.' })
-  name!: string
+  name?: string
 }

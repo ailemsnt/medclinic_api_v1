@@ -3,7 +3,7 @@ import { Request } from 'express'
 import { AuthUserDto } from '../dto/auth-user.dto'
 
 export const GetUserJwt = createParamDecorator(
-  (data: keyof AuthUserDto | undefined, ctx: ExecutionContext): any => {
+  (data: keyof AuthUserDto | undefined, ctx: ExecutionContext): unknown => {
     const user = getUserJwt(ctx)
 
     // Se uma propriedade específica foi pedida e o usuário existe, retorna apenas ela

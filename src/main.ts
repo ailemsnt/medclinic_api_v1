@@ -16,7 +16,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1')
 
-  await app.listen(env.PORT)
+  await app.listen(env.PORT, '0.0.0.0')
 }
 
 bootstrap().catch((err: unknown) => {

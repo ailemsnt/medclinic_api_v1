@@ -29,6 +29,7 @@ export const appDataSource = new DataSource({
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
   poolSize: 10,
+  ssl: env.DB_SSL ? { rejectUnauthorized: false } : false,
   /**
    * Só da pra utilizar em ambiente de desenvolvimento
    */
