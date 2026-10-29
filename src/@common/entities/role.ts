@@ -12,7 +12,6 @@ import { User } from './user'
 
 export const RoleName = {
   ADMIN: 'admin',
-  USER: 'user',
   DOCTOR: 'doctor',
   SECRETARY: 'secretary',
 } as const

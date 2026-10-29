@@ -74,9 +74,6 @@ export class DoctorRepository extends Repository<Doctor> {
       .orderBy('doctor.id', 'ASC')
       .skip((filter.page - 1) * filter.pageSize)
       .take(filter.pageSize)
-      .orderBy('doctor.id', 'ASC')
-      .skip((filter.page - 1) * filter.pageSize)
-      .take(filter.pageSize)
 
     if (filter.name) {
       query.andWhere('user.name ILIKE :name', { name: `%${filter.name}%` })

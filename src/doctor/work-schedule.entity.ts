@@ -23,7 +23,7 @@ export class WorkSchedule {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
   id!: number
 
-  @Column('number')
+  @Column('int')
   doctorId!: number
 
   @Column('jsonb')

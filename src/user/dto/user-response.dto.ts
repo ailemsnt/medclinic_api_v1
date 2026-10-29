@@ -1,7 +1,5 @@
-import { Exclude } from 'class-transformer'
 import { User } from '../../@common/entities/user'
 
-@Exclude()
 export class UserResponseDto {
   id!: number
   name!: string
