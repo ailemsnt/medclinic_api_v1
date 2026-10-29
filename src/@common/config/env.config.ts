@@ -69,6 +69,7 @@ const envSchema = z.object({
     return false
   }, z.boolean().default(false)),
   DB_LOG_LEVEL: z.enum(['query', 'error', 'info', 'warn']).default('error'),
+  DB_SSL: z.preprocess((val) => val === 'true', z.boolean().default(false)),
 
   //Autenticação
   JWT_SECRET: z
